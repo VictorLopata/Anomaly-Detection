@@ -1,42 +1,27 @@
 \c :dbname
 
-CREATE DOMAIN WindowID as integer check ( VALUE >= 0 );
-CREATE DOMAIN SensorID as integer check ( VALUE >= 0 );
-CREATE TYPE AnomalyType AS ENUM ('Covariance Anomaly', 'Average Anomaly');
+CREATE DOMAIN IntGZ AS integer CHECK (VALUE > 0);
+CREATE DOMAIN IntGEZ AS integer CHECK (VALUE >= 0);
 
-CREATE TABLE IF NOT EXISTS Averages(
-    value FLOAT,
-    window WindowID NOT NULL,
-    sensor SensorID NOT NULL,
-    time timestamp,
-
-    PRIMARY KEY (window, sensor, time)
-);
-
-CREATE TABLE IF NOT EXISTS Covariances(
+CREATE TABLE IF NOT EXISTS Average(
     id SERIAL PRIMARY KEY,
-    sensor1 SensorID NOT NULL,
-    sensor2 SensorID NOT NULL,
-    window WindowID NOT NULL,
-    value FLOAT,
-    time timestamp,
-
-    FOREIGN KEY (sensor1) REFERENCES Sensors(id),
-    FOREIGN KEY (sensor2) REFERENCES Sensors(id)
+    sensor_id IntGEZ NOT NULL,
+    start_timestamp IntGEZ NOT NULL,
+    end_timestamp IntGEZ NOT NULL,
+    value float,
+    is_anomaly BOOLEAN NOT NULL DEFAULT FALSE,
+    CONSTRAINT start_gz_end CHECK (end_timestamp > start_timestamp),
+    CONSTRAINT unique_sensor UNIQUE (sensor_id, start_timestamp)
 );
 
-CREATE TABLE IF NOT EXISTS Sensors(
-    id SERIAL PRIMARY KEY
-);
-
-CREATE TABLE IF NOT EXISTS Anomaly(
-    windowA WindowID NOT NULL ,
-    anomaly AnomalyType,
-    sensor1 SensorID NOT NULL,
-    sensor2 SensorID,
-    time timestamp NOT NULL,
-
-    PRIMARY KEY (anomaly, sensor1),
-    FOREIGN KEY (sensor1) REFERENCES Sensors(id),
-    FOREIGN KEY (sensor2) REFERENCES Sensors(id)
+CREATE TABLE IF NOT EXISTS Covariance(
+    id SERIAL PRIMARY KEY,
+    sensor1_id IntGEZ NOT NULL,
+    sensor2_id IntGEZ NOT NULL,
+    start_timestamp IntGEZ NOT NULL,
+    end_timestamp IntGEZ NOT NULL,
+    value float,
+    is_anomaly BOOLEAN NOT NULL DEFAULT FALSE,
+    CONSTRAINT start_gz_end CHECK (end_timestamp > start_timestamp),
+    CONSTRAINT unique_sensor UNIQUE (sensor1_id , sensor2_id , start_timestamp)
 )

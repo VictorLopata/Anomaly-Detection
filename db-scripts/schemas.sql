@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS Average(
     value float,
     is_anomaly BOOLEAN NOT NULL DEFAULT FALSE,
     CONSTRAINT start_gz_end CHECK (end_timestamp > start_timestamp),
-    CONSTRAINT unique_sensor UNIQUE (sensor_id, start_timestamp)
+    CONSTRAINT unique_sensor_av UNIQUE (sensor_id, start_timestamp)
 );
 
 CREATE TABLE IF NOT EXISTS Covariance(
@@ -23,6 +23,6 @@ CREATE TABLE IF NOT EXISTS Covariance(
     value float,
     is_anomaly BOOLEAN NOT NULL DEFAULT FALSE,
     CONSTRAINT start_gz_end CHECK (end_timestamp > start_timestamp),
-    CONSTRAINT unique_sensor UNIQUE (sensor1_id , sensor2_id , start_timestamp),
+    CONSTRAINT unique_sensor_cov UNIQUE (sensor1_id , sensor2_id , start_timestamp),
     CONSTRAINT diff_sens CHECK (sensor1_id != sensor2_id)
 );

@@ -5,12 +5,12 @@
 #ifndef ANOMALY_DETECTION_REDISMANAGER_H
 #define ANOMALY_DETECTION_REDISMANAGER_H
 
-
-
+/**
+ * Manages reading and writing operations.
+ */
 class RedisManager {
 
 };
-
 
 
 #endif //ANOMALY_DETECTION_REDISMANAGER_H

@@ -6,11 +6,17 @@
 #define ANOMALY_DETECTION_CALCULATOR_H
 
 
-
 class Calculator {
 
 };
 
+class MeanCalculator: Calculator {
+
+};
+
+class CovarianceCalculator: Calculator {
+
+};
 
 
 #endif //ANOMALY_DETECTION_CALCULATOR_H

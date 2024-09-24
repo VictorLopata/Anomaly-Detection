@@ -1,42 +1,42 @@
-\c :dbname
-
 
 -- PROCEDURES
 
 CREATE FUNCTION check_avg_disjoint()
-    RETURN TRIGGER
-    LANGUAGE PLPGSQL
-AS $$
-    BEGIN
-        IF EXIST (
-           SELECT 1 FROM Average
-           WHERE Average.sensor_id = NEW.sensor_id AND (NEW.start_timestamp, END.end_timestamp) OVERLAPS (Average.start_timestamp, Average.end_timestamp)
-           -- NEW.start_timestamp <= Average.end_timestamp AND Average.start_timestamp <= NEW.end_timestamp
-        ) IS TRUE THEN
-           RAISE EXCEPTION 'invalid avg time-stamp'
-        END IF;
-
-        RETURN NEW
-    END;
-$$
-
-CREATE FUNCTION check_cov_disjoint()
-    RETURN TRIGGER
-        LANGUAGE PLPGSQL
+    RETURNS TRIGGER
+    LANGUAGE plpgsql
 AS $$
 BEGIN
-        IF EXIST (
-           SELECT 1 FROM Covariance
-           WHERE Covariance.sensor1_id = NEW.sensor1_id AND Covariance.sensor2_id = NEW.sensor2_id AND
-           (NEW.start_timestamp, END.end_timestamp) OVERLAPS (Covariance.start_timestamp, Covariance.end_timestamp)
-           -- NEW.start_timestamp <= Covariance.end_timestamp AND Covariance.start_timestamp <= NEW.end_timestamp
-        ) IS TRUE THEN
-           RAISE EXCEPTION 'invalid cov time-stamp'
-        END IF;
+    IF EXISTS (
+        SELECT 1 FROM Average
+        WHERE Average.sensor_id = NEW.sensor_id
+          AND (NEW.start_timestamp, NEW.end_timestamp) OVERLAPS (Average.start_timestamp, Average.end_timestamp)
+    ) THEN
+        RAISE EXCEPTION 'invalid avg time-stamp';
+END IF;
 
-    RETURN NEW
-    END;
-$$
+RETURN NEW;
+END;
+$$;
+
+
+CREATE FUNCTION check_cov_disjoint()
+    RETURNS TRIGGER
+    LANGUAGE plpgsql
+AS $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM Covariance
+        WHERE Covariance.sensor1_id = NEW.sensor1_id
+          AND Covariance.sensor2_id = NEW.sensor2_id
+          AND (NEW.start_timestamp, NEW.end_timestamp) OVERLAPS (Covariance.start_timestamp, Covariance.end_timestamp)
+    ) THEN
+        RAISE EXCEPTION 'invalid cov time-stamp';
+END IF;
+
+RETURN NEW;
+END;
+$$;
+
 
 
 -- TRIGGERS

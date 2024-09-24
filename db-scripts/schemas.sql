@@ -1,4 +1,3 @@
-\c :dbname
 
 CREATE DOMAIN IntGZ AS integer CHECK (VALUE > 0);
 CREATE DOMAIN IntGEZ AS integer CHECK (VALUE >= 0);

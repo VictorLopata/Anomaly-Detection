@@ -20,7 +20,7 @@ int setWindow(int argc, char *argv[]) {
 
     // check if the value for the size is acceptable
     if (size < 1) {
-        cout << "ERROR: window size mmust be greater or equal to 1" << endl;
+        cout << "ERROR: window size must be greater or equal to 1" << endl;
         exit(1);
     }
     return size;

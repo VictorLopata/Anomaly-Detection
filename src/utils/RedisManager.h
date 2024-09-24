@@ -5,6 +5,7 @@
 #ifndef ANOMALY_DETECTION_REDISMANAGER_H
 #define ANOMALY_DETECTION_REDISMANAGER_H
 
+using namespace std;
 
 class RedisManager {
 

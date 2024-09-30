@@ -131,3 +131,5 @@ PGresult* Con2DB::ExecSQLtuples(char *sqlcmd)
 
     return (res);
 }
+
+

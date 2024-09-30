@@ -5,5 +5,8 @@ set(CMAKE_CXX_STANDARD 11)
 
 add_executable(Anomaly-Detection src/main.cpp
         src/Calculator.cpp
-        src/utils/RedisManager.cpp
-        src/utils/DBManager.cpp)
+
+)
+
+add_executable(prova src/con2db/main.cpp
+        src/con2db/pgsql.cpp)

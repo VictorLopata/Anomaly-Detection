@@ -4,7 +4,6 @@ project(Anomaly-Detection)
 set(CMAKE_CXX_STANDARD 11)
 
 add_executable(Anomaly-Detection src/main.cpp
-        src/Calculator.cpp
 
 )
 

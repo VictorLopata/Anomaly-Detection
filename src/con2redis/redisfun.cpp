@@ -17,6 +17,47 @@ REDIS_REPLY_ARRAY=%d\n",
 	 REDIS_REPLY_ARRAY
 	 );
   
+};
+
+config getConf(redisContext *c) {
+    config conf;
+    string last_conf_id = "$";
+
+    while (true) {
+        redisReply* reply = (redisReply*)redisCommand(c, "XREAD BLOCK 0 STREAMS conf %s", last_conf_id.c_str());
+        if (reply == nullptr) {
+            break;
+        }
+        if (reply->type == REDIS_REPLY_ARRAY && reply->elements > 0) {
+            redisReply* streamReply = reply->element[0];
+            if (streamReply->type == REDIS_REPLY_ARRAY && streamReply->elements == 2) {
+                redisReply* messages = streamReply->element[1];
+                for (size_t j = 0; j < messages->elements; ++j) {
+                    redisReply* message = messages->element[j];
+                    last_conf_id = message->element[0]->str;
+                    redisReply* fields = message->element[1];
+                    for (size_t k = 0; k < fields->elements; k += 2) {
+                        string field_name = fields->element[k]->str;
+                        string field_value = fields->element[k + 1]->str;
+                        if (field_name == "num_streams") {
+                            conf.num_streams = stoi(field_value);
+                            // cout << "Numero di stream da ascoltare: " << conf.num_streams << endl;
+                        } else if (field_name == "threshold") {
+                            conf.threshold = stod(field_value);
+                            // cout << "Threshold: " << conf.threshold << endl;
+                        } else if (field_name == "W") {
+                            conf.W = stod(field_value);
+                            // cout << "W: " << conf.W << endl;
+                        }
+                    }
+                }
+            }
+            freeReplyObject(reply);
+            break;
+        }
+        freeReplyObject(reply);
+    }
+    return conf;
 }
 
 
@@ -38,7 +79,7 @@ void assertReply(redisContext *c, redisReply *r) {
 
 
 
-
+/**
 void dumpReply(redisReply *r, int indent) {
 
     sds buffer = sdsempty();
@@ -77,7 +118,7 @@ void dumpReply(redisReply *r, int indent) {
 
     sdsfree(buffer);
 }
-
+**/
 
 
 

@@ -4,6 +4,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include "../utils/configuration.h"
 
 // include hiredis
 extern "C" {
@@ -30,12 +31,13 @@ extern "C" {
   (redisReply*) redisCommand(fmt, __VA_ARGS__)
 
 
+config getConf(redisContext *c);
 
 void assertReplyType(redisContext *c, redisReply *r, int type);
 
 void assertReply(redisContext *c, redisReply *r);
 
-void dumpReply(redisReply *r, int indent);
+//void dumpReply(redisReply *r, int indent);
 
 void initStreams(redisContext *c, const char *stream);
 

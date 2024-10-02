@@ -81,7 +81,7 @@ int main() {
                     redisReply* entryReply = entriesReply->element[j];
                     string entryID = entryReply->element[0]->str;
                     redisReply* fieldsReply = entryReply->element[1];
-                    cout << "Stream: " << nomeStream << ", ID: " << entryID << std::endl;
+                    cout << "Stream: " << nomeStream << ", ID: " << entryID << endl;
                     for (size_t k = 0; k < fieldsReply->elements; k += 2)
                     {
                         // TODO: Confronta con media corrente, se supera threshold, allora anomalia. Salva nel database.
@@ -95,8 +95,6 @@ int main() {
         }
         freeReplyObject(reply);
     }
-
-
 
     redisFree(c);
     return 0;

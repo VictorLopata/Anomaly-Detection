@@ -1,8 +1,10 @@
 #include "main.h"
-
 #include "average.h"
 #include "../con2redis/con2redis.h"
 #include "../utils/configuration.h"
+
+#define REDIS_SERVER "localhost"
+#define REDIS_PORT 6379
 
 int main() {
 
@@ -10,7 +12,7 @@ int main() {
 	config configuration = getConf();
 
 	// Create object Average
-	Average avg = Average(REDIS_SERVER, REDIS_PORT);
+	Average avg = Average(REDIS_SERVER, REDIS_PORT, configuration.num_streams, configuration.W);
 
 	// Allocate the array with all the streams
 	vector<string> streams(configuration.W);

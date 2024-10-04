@@ -5,6 +5,7 @@
 #include <map>
 #include "main.h"
 #include "../con2redis/con2redis.h"
+#include "../average-service/average.h"
 
 
 using namespace std;

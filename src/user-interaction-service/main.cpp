@@ -1,73 +1,89 @@
 #include <iostream>
-#include <stdlib.h>
+#include <cstdlib>
 #include "main.h"
+#include "../utils/configuration.h"
+#include "../con2redis/con2redis.h"
+
 using namespace std;
 
-void coutFormEndl(string cod, string testo) {
-    cout << cod << testo << "\033[0m" << endl;
-}
-void coutForm(string cod, string testo) {
-    cout << cod << testo << "\033[0m";
-}
-
-void clearTerminal() {
-    // CSI[2J clears screen, CSI[H moves the cursor to top-left corner
-    cout << "\x1B[2J\x1B[H";
+void printColored(const string& colorCode, const string& message, bool newLine = true) {
+    cout << colorCode << message << "\033[0m" ;
+    if (newLine) {
+        cout << endl;
+    }
 }
 
 int main() {
-    int num_sensor;
-    int W;
-    double threshold;
 
-    /**
-    cout << "\033[31m" << "TESTO ROSSO" << "\033[0m" << endl;
-    cout << "\033[32m" << "Questo testo è verde" << "\033[0m" << endl;
-    cout << "\033[1;34m" << "Questo testo è blu e in grassetto" << "\033[0m" << endl;
-    cout << "\033[37;41m" << "Testo bianco su sfondo rosso" << "\033[0m" << endl;
-    cout << "\033[30;42m" << "Testo nero su sfondo verde" << "\033[0m" << endl;
-     **/
+    config cfg;
+    redisContext *c;
+    redisReply *reply;
+
     string dec;
-    string purpGrass = "\033[1;35m";
-    string redGrass = "\033[1;33m";
-    string bluGrass = "\033[1;34m";
-    cout << "\033[4;1;35m" << "ANOMALY-SEEKER" << "\033[0m" << endl << endl;
-    cout << "\033[1;35m" << "Benvenuto nel sistema di Anomaly Detection!" << "\033[0m" << endl;
-    coutFormEndl(purpGrass, "Prima di procedere, assicurati che i seguenti servizi siano attivi:");
-    cout << endl;
-    coutFormEndl(purpGrass, "1) REDIS ");
-    coutFormEndl(purpGrass, "2) POSTGRESQL");
-    cout << endl;
-    coutForm(purpGrass, "Continuare? [Y/n] ");
 
-    while (1) {
+    printColored(PURP_GRASS, "ANOMALY-SEEKER");
+    cout << endl;
+    printColored(PURP_GRASS, "Benvenuto nel sistema di Anomaly Detection!");
+    printColored(PURP_GRASS, "Prima di procedere, assicurati che i seguenti servizi siano attivi:");
+    cout << endl;
+    printColored(PURP_GRASS, "1) REDIS ");
+    printColored(PURP_GRASS, "2) POSTGRESQL");
+    cout << endl;
+    printColored(PURP_GRASS, "Continuare? [Y/n] ");
+
+    while (true) {
         cin >> dec;
 
         if (dec == "Y" || dec == "y") {
             break;
         } else if (dec == "N" || dec == "n") {
-            coutForm(purpGrass, "Va bene, ciao.");
+            printColored(PURP_GRASS, "Va bene, ciao.", false);
             return 0;
         } else {
-            coutForm(redGrass, "Input non valido! Inserisci 'Y' se vuoi continuare oppure 'n' se non vuoi continuare.");
+            printColored(YELL_GRASS, "Input non valido! Inserisci 'Y' se vuoi continuare oppure 'n' se non vuoi continuare.", false);
             cin.clear();
         }
     }
-    system("clear"); // NON FUNZIOONAAAAA :(
-    // coutForm(purpGrass, "ECCOCI.");
+
+    system("clear"); // Only works for unix systems...
+    printColored(BLUE_GRASS, "Quante stream vuoi analizzare? ", false);
+    cin >> cfg.num_streams;
     cout << endl;
-    coutForm(bluGrass, "Quante stream vuoi analizzare? ");
-    cin >> num_sensor;
+
+    printColored(BLUE_GRASS, "Inserisci l'ampiezza temporale W (in secondi, 0 se vuoi utilizzare valore di default 25): ", false);
+    cin >> cfg.W;
+    if (cfg.W == 0) {
+        cfg.W = DEFAULT_W;
+    }
     cout << endl;
-    coutForm(bluGrass, "Inserisci l'ampiezza temporale W (in secondi, 0 se vuoi utilizzare valore di default 25): ");
-    cin >> W;
-    cout << endl;
-    coutForm(bluGrass, "Inserisci il valore di threshold (0 se vuoi utilizzare valore di default 0.25): ");
-    cin >> threshold;
+
+    printColored(BLUE_GRASS, "Inserisci il valore di threshold (0 se vuoi utilizzare valore di default 0.25): ", false);
+    cin >> cfg.threshold;
+    if (cfg.threshold == 0) {
+        cfg.threshold = DEFAULT_THRESHOLD;
+    }
 
 
+    // Avvia la trasmissione della configuarazione
+    c = redisConnect(REDIS_SERVER, REDIS_PORT);
+    reply = RedisCommand(c, "XADD conf * num_streams %s W %s threshold %s", (to_string(cfg.num_streams)).c_str(), (to_string(cfg.W)).c_str(), (to_string(cfg.threshold)).c_str());
+
+    assertReply(c, reply);
+
+    system("clear");
+
+    // Detection started
+    printColored(YELL_GRASS, "INIZIO DETECTION...");
+
+    while(true) {
+        /**
+         * Listen anomaly_stream and wait for an anomaly.
+         */
+    }
 
 
+    freeReplyObject(reply);
+    redisFree(c);
 
     return 0;
 

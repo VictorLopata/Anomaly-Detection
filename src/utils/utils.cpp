@@ -1,6 +1,6 @@
+#include "utils.h"
+
 using namespace std;
-
-
 
 void update_cov(int& n, double& avgX, double& avgY, double& cov, double newX, double newY) {
     n += 1;

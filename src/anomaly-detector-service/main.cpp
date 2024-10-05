@@ -90,9 +90,15 @@ int main() {
 
                     for (size_t k = 0; k < fieldsReply->elements; k += 2)
                     {
+                        /**
+                         * TODO: Confronta il valore v della stream s con il valore vc presente nel vettore.
+                         * TODO: Se |v - vc| > threshold, allora invia anomalia al processo user-interaction-service e salva nel DB con i valori corrispondenti.
+                         * TODO: Altrimenti salva nel DB.
+                         *
+                         * Dovremmo salvare anche i log nel db.
+                         */
                         string campo = fieldsReply->element[k]->str;
                         string valore = fieldsReply->element[k+1]->str;
-
                     }
 
                     lastID[nomeStream] = entryID;

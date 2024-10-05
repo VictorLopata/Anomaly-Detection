@@ -25,7 +25,7 @@ class Average {
         double calculate_average(const vector<double>& values);
 
     private:
-        RedisContext* c; // Connection to Redis
+        redisContext* c; // Connection to Redis
         int n_sensors; // Number of streams (sensors)
         int windowSize; // Time W after which we compute the average
         map<string, vector<float>> values; // This contains values from each sensor in a time W

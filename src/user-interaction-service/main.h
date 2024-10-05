@@ -1,3 +1,7 @@
+#include <iostream>
+#include <cstdlib>
+#include "../utils/configuration.h"
+#include "../con2redis/con2redis.h"
 
 
 #define REDIS_SERVER "localhost"

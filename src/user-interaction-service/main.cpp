@@ -1,8 +1,4 @@
-#include <iostream>
-#include <cstdlib>
 #include "main.h"
-#include "../utils/configuration.h"
-#include "../con2redis/con2redis.h"
 
 using namespace std;
 

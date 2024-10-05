@@ -1,12 +1,4 @@
-
-#include <iostream>
-#include <vector>
-#include <string>
-#include <map>
 #include "main.h"
-#include "../con2redis/con2redis.h"
-#include "../average-service/average.h"
-
 
 using namespace std;
 
@@ -25,12 +17,23 @@ int binomialCoeff(int n, int k) {
 }
 
 int main() {
+
+    config conf;
+    redisContext *c;
+    redisReply *reply;
+    redisReply* streamReply;
+    redisReply* entriesReply;
+    redisReply* entryReply;
+    redisReply* fieldsReply;
+
+
+
     // Connessione a Redis
-    redisContext *c = redisConnect(REDIS_SERVER, REDIS_PORT);
+    c = redisConnect(REDIS_SERVER, REDIS_PORT);
 
     // Wait configurations from user-interaction-service
-    config conf = getConf(c);
-    cout << "n_stream: " << conf.num_streams << " Threshold: "<< conf.threshold << " W: "<< conf.W <<endl;
+    conf = getConf(c);
+
     int numStreamCov = binomialCoeff(conf.num_streams, 2);
     int numTotStream = numStreamCov + conf.num_streams;
 
@@ -49,7 +52,6 @@ int main() {
         streams[i] = strName;
     }
 
-    // Ascolto le stream su Redis.
 
     // Mappa per tenere traccia degli ultimi ID letti per ogni stream
     std::map<std::string, std::string> lastID;
@@ -69,22 +71,22 @@ int main() {
             com += " " + lastID[streams[i]];
         }
         // Esecuzione comando
-        redisReply* reply = (redisReply*)redisCommand(c, com.c_str());
+        reply = RedisCommand(c, com.c_str());
         if (reply == nullptr) {
             cerr << "Errore nell'esecuzione del comando XREAD" << endl;
             break;
         } else {
             for (int i = 0; i < reply->elements; ++i) {
 
-                redisReply* streamReply = reply->element[i];
+                streamReply = reply->element[i];
                 string nomeStream = streamReply->element[0]->str;
-                redisReply* entriesReply = streamReply->element[1];
+                entriesReply = streamReply->element[1];
 
                 for (int j = 0; j < entriesReply->elements; ++j) {
 
-                    redisReply* entryReply = entriesReply->element[j];
+                    entryReply = entriesReply->element[j];
                     string entryID = entryReply->element[0]->str;
-                    redisReply* fieldsReply = entryReply->element[1];
+                    fieldsReply = entryReply->element[1];
 
                     for (size_t k = 0; k < fieldsReply->elements; k += 2)
                     {

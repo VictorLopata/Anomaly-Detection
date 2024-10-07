@@ -14,7 +14,7 @@ int main() {
 	// Create object Average
 	Average avg = Average(REDIS_SERVER, REDIS_PORT, configuration.num_streams, configuration.W);
 
-	// Allocate the array with all the streams
-	vector<string> streams(configuration.W);
-	avg.listenStreams(streams);
+	avg.listenStreams();
+
+	return 0;
 }

@@ -6,6 +6,7 @@
 #include <map>
 
 using namespace std;
+using namespace chrono;
 
 class Average {
     public:
@@ -16,19 +17,26 @@ class Average {
         ~Average();
 
         // Listen to the streams Redis
-        void listenStreams(const vector<string>& streams);
-
-        // Store the value from a stream (sensor) in the array
-        void getValueStream(const string& stream, float value);
+        void listenStreams();
 
         // This method calculates average from the streams (Sensors in our project)
-        double calculate_average(const vector<double>& values);
+        void calculate_averages();
+
 
     private:
         redisContext* c; // Connection to Redis
+        vector<string> streams; // Stream names of the stream I am listening
+        map<string, string> lastIDs; // Last ID stored for XREAD
+
         int n_sensors; // Number of streams (sensors)
         int windowSize; // Time W after which we compute the average
-        map<string, vector<float>> values; // This contains values from each sensor in a time W
+        vector<double> values; // This contains all the averages for each stream
+        int count; //  This count the number of values which I accept during the window W
+
+
+        // This method flush the previous values of the stream in order to accept the new ones
+        void cleanVectors();
+
 };
 
 

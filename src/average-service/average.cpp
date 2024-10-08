@@ -1,13 +1,26 @@
 #include "average.h"
 #include <iostream>
 
-Average::Average(const string& redis_host, const string& redis_port, int n_sensors, int windowSize) {
-  c = redisConnect(redis_host.c_str(), redis_port);
+
+#define REDIS_SERVER "localhost"
+#define REDIS_PORT 6379
+
+Average::Average() {
+  c = redisConnect(REDIS_SERVER, REDIS_PORT);
   if (c == nullptr || c->err) {
-    cerr << "Error connecting to redis at " << redis_host << ":" << redis_port << endl;
+    cerr << "Error connecting to redis at " << REDIS_SERVER << endl;
     cerr << "Error: " << c->errstr << endl;
     exit(1);
   }
+
+  cout << "Aspettando configurazione..." << endl;
+  config configuration = getConf(c);
+
+  this->n_sensors = configuration.num_streams;
+  this->windowSize = configuration.W;
+
+  cout << "Configurazione ricvuta: W(" << this->windowSize << ") e n_sensor(" << this->n_sensors << ")" << endl;
+
 
   // This initializes the starting vector of values to 0
   values.resize(n_sensors, 0.0);
@@ -32,8 +45,10 @@ void Average::listenStreams() {
 
   auto start = steady_clock::now(); //start the timer for W window
 
+  cout << "Ascoltando le stream..." << endl;
   while (true) {
-    string command = "XREAD COUNT 1 BLOCK 1000 STREAMS";
+    string command = "XREAD COUNT 1 BLOCK 0 STREAMS";
+
     for (const auto &stream : streams) {
       command += " " + stream;
     }
@@ -73,10 +88,14 @@ void Average::listenStreams() {
 
     auto now = steady_clock::now();
     duration<double> elapsed = now - start;
+
     if (elapsed.count() >= windowSize) {
-      calculate_averages();
-      cleanVectors();
-      count = 0;  // Reset the counter to start counting new values during the new window
+        cout << "Numero di secondi: " << elapsed.count() << endl;
+        if (this->count != 0) {
+            calculate_averages();
+            cleanVectors();
+            count = 0;  // Reset the counter to start counting new values during the new window
+        }
       start = steady_clock::now();  // Reset the timer for the next window
     }
   }
@@ -85,8 +104,11 @@ void Average::listenStreams() {
 void Average::calculate_averages() {
 
   for (int i = 0; i < n_sensors; i++) {
-    double avg =  values[i] / count;
+    double avg =  values[i] / this->count;
+    cout << "Count: " << this->count << endl;
     string streamName = "avgS" + to_string(i);
+    cout << "avg" << i << ": " << avg << endl;
+    /**
     string comm = "XADD " + streamName + "* avg " + to_string(avg);
     redisReply* reply = (redisReply *)redisCommand(c, comm.c_str());
 
@@ -95,6 +117,7 @@ void Average::calculate_averages() {
     }
 
     freeReplyObject(reply);
+     **/
   }
 }
 

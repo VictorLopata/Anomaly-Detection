@@ -11,7 +11,7 @@ using namespace chrono;
 class Average {
     public:
         // Constructor for connecting to Redis
-        Average(const string& redis_host, const string& redis_port, int n_sensors, int windowSize);
+        Average();
 
         // Destructor for cleaning the connection
         ~Average();
@@ -31,7 +31,7 @@ class Average {
         int n_sensors; // Number of streams (sensors)
         int windowSize; // Time W after which we compute the average
         vector<double> values; // This contains all the averages for each stream
-        int count; //  This count the number of values which I accept during the window W
+        int count = 0; //  This count the number of values which I accept during the window W
 
 
         // This method flush the previous values of the stream in order to accept the new ones

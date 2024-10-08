@@ -9,10 +9,9 @@
 int main() {
 
 	//Initial config with window, threshold and number of streams
-	config configuration = getConf();
 
 	// Create object Average
-	Average avg = Average(REDIS_SERVER, REDIS_PORT, configuration.num_streams, configuration.W);
+	Average avg = Average();
 
 	avg.listenStreams();
 

@@ -4,6 +4,7 @@
 #include <iostream>
 #include "../con2redis/con2redis.h"
 #include <map>
+#include "../utils/stream.h"
 
 using namespace std;
 using namespace chrono;
@@ -30,12 +31,9 @@ class Average {
 
         int n_sensors; // Number of streams (sensors)
         int windowSize; // Time W after which we compute the average
-        vector<double> values; // This contains all the averages for each stream
-        int count = 0; //  This count the number of values which I accept during the window W
+        vector<window_stream> str_info; // This contains all the averages for each stream
 
 
-        // This method flush the previous values of the stream in order to accept the new ones
-        void cleanVectors();
 
 };
 

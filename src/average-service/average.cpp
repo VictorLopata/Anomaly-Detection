@@ -23,11 +23,14 @@ Average::Average() {
 
 
   // This initializes the starting vector of values to 0
-  values.resize(n_sensors, 0.0);
+  //values.resize(n_sensors, 0.0);
+  str_info.resize(n_sensors);
+
+
 
   // This initializes the stream names which we are listening
   for (int i = 0; i < n_sensors; i++) {
-    streams.push_back("stream #" + to_string(i));
+    streams.push_back("stream#" + to_string(i));
   }
 
 }
@@ -56,6 +59,7 @@ void Average::listenStreams() {
       command += " " + lastIDs[stream];
     }
 
+
     // Execute the command
     redisReply* reply = (redisReply *)redisCommand(c, command.c_str());
     if (reply && reply->type == REDIS_REPLY_ARRAY) {
@@ -75,11 +79,12 @@ void Average::listenStreams() {
             int sensorIdx = distance(streams.begin(), find(streams.begin(), streams.end(), streamName));
 
             // Add value to the corresponding index of the stream
-            values[sensorIdx] += value;
+            // cout << "RICEVUTO VALORE DA SensorID: " << sensorIdx << " Value: " << value << endl;
+            str_info[sensorIdx].val += value;
+            str_info[sensorIdx].count += 1;
           }
 
           lastIDs[streamName] = entryID; // Update the last ID
-          count++; // Increment the counter after reading a new value
         }
       }
     }
@@ -91,12 +96,11 @@ void Average::listenStreams() {
 
     if (elapsed.count() >= windowSize) {
         cout << "Numero di secondi: " << elapsed.count() << endl;
-        if (this->count != 0) {
-            calculate_averages();
-            cleanVectors();
-            count = 0;  // Reset the counter to start counting new values during the new window
-        }
-      start = steady_clock::now();  // Reset the timer for the next window
+
+        calculate_averages();
+
+
+        start = steady_clock::now();  // Reset the timer for the next window
     }
   }
 }
@@ -104,10 +108,15 @@ void Average::listenStreams() {
 void Average::calculate_averages() {
 
   for (int i = 0; i < n_sensors; i++) {
-    double avg =  values[i] / this->count;
-    cout << "Count: " << this->count << endl;
-    string streamName = "avgS" + to_string(i);
-    cout << "avg" << i << ": " << avg << endl;
+      if (str_info[i].count == 0) {
+          cout << "La stream " << streams[i] << " non ha ricevuto nessun valore per il momento..." << endl;
+          continue;
+      }
+      double avg =  str_info[i].val / str_info[i].count;
+      str_info[i].val = 0;
+      str_info[i].count = 0;
+      string streamName = "avgS" + to_string(i);
+      cout << "avg" << i << ": " << avg << endl;
     /**
     string comm = "XADD " + streamName + "* avg " + to_string(avg);
     redisReply* reply = (redisReply *)redisCommand(c, comm.c_str());
@@ -118,11 +127,5 @@ void Average::calculate_averages() {
 
     freeReplyObject(reply);
      **/
-  }
-}
-
-void Average::cleanVectors() {
-  for (int i = 0; i < values.size(); ++i) {
-    values[i] = 0.0;
   }
 }

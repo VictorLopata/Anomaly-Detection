@@ -16,7 +16,7 @@ def send(sensor_data: dict):
     print("Mando i dati:")
     for sId, v in sensor_data.items():
         print(f'Value = {v}         Sensor = {sId}')
-        stream = f'stream #{sId}'
+        stream = f'stream#{sId}'
         data  = {
             'Value': v
         }

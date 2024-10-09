@@ -10,11 +10,11 @@ double covariance(const std::deque<double>& x, const std::deque<double>& y) {
     double mean_x = std::accumulate(x.begin(), x.end(), 0.0) / x.size();
     double mean_y = std::accumulate(y.begin(), y.end(), 0.0) / y.size();
     double cov = 0.0;
-    
+
     for (size_t i = 0; i < x.size(); ++i) {
         cov += (x[i] - mean_x) * (y[i] - mean_y);
     }
-    
+
     return cov / x.size();
 }
 
@@ -26,6 +26,14 @@ int get_time_window(redisContext* c) {
     return w;
 }
 
+// 从 Redis 获取数据集大小 n
+int get_dataset_size(redisContext* c) {
+    redisReply* reply = (redisReply*)redisCommand(c, "GET dataset_size");
+    int n = (reply && reply->type == REDIS_REPLY_STRING) ? std::stoi(reply->str) : 5; // 默认 5 个数据点
+    freeReplyObject(reply);
+    return n;
+}
+
 int main() {
     // 连接 Redis 服务器
     redisContext* c = redisConnect("127.0.0.1", 6379);
@@ -34,14 +42,15 @@ int main() {
         return 1;
     }
 
-    // 从 Redis 获取时间窗口 w
-    int w = get_time_window(c);
-    std::cout << "Time window (seconds): " << w << std::endl;
-
     std::deque<double> window_x;
     std::deque<double> window_y;
 
     while (true) {
+        // 从 Redis 获取时间单位 w 和数据集大小 n
+        int w = get_time_window(c);
+        int n = get_dataset_size(c);
+        std::cout << "Time window (seconds): " << w << " | Dataset size: " << n << std::endl;
+
         // 从 Redis Stream 中获取数据集
         redisReply* reply = (redisReply*)redisCommand(c, "XREAD BLOCK 5000 STREAMS dataset_stream $");
         if (reply->type == REDIS_REPLY_ARRAY) {
@@ -58,12 +67,12 @@ int main() {
                         window_x.push_back(data_x);
                         window_y.push_back(data_y);
 
-                        if (window_x.size() > w) {
+                        if (window_x.size() > n) {
                             window_x.pop_front();
                             window_y.pop_front();
                         }
 
-                        if (window_x.size() == w) {
+                        if (window_x.size() == n) {
                             // 计算协方差
                             double cov = covariance(window_x, window_y);
                             std::cout << "Covariance: " << cov << std::endl;
@@ -79,9 +88,8 @@ int main() {
 
         freeReplyObject(reply);
 
-        // 按时间单位 w 等待
+        // 等待 w 秒后进行下一轮计算
         std::this_thread::sleep_for(std::chrono::seconds(w));
-        w = get_time_window(c);  // 动态获取更新的时间窗口
     }
 
     // 关闭 Redis 连接

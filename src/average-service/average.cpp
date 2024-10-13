@@ -64,6 +64,7 @@ void Average::listenStreams() {
     redisReply* reply = (redisReply *)redisCommand(c, command.c_str());
     if (reply && reply->type == REDIS_REPLY_ARRAY) {
       for (size_t i = 0; i < reply->elements; ++i) {
+
         redisReply* streamReply = reply->element[i];
         string streamName = streamReply->element[0]->str;
         redisReply* entriesReply = streamReply->element[1];
@@ -109,23 +110,24 @@ void Average::calculate_averages() {
 
   for (int i = 0; i < n_sensors; i++) {
       if (str_info[i].count == 0) {
-          cout << "La stream " << streams[i] << " non ha ricevuto nessun valore per il momento..." << endl;
+          // cout << "La stream " << streams[i] << " non ha ricevuto nessun valore per il momento..." << endl;
           continue;
       }
       double avg =  str_info[i].val / str_info[i].count;
       str_info[i].val = 0;
       str_info[i].count = 0;
-      string streamName = "avgS" + to_string(i);
-      cout << "avg" << i << ": " << avg << endl;
-    /**
-    string comm = "XADD " + streamName + "* avg " + to_string(avg);
-    redisReply* reply = (redisReply *)redisCommand(c, comm.c_str());
+      string streamName = "a#" + to_string(i);
 
-    if (reply == nullptr) {
-      cerr << "Error sending the average to Redis for sensor" << i << endl;
-    }
 
-    freeReplyObject(reply);
-     **/
+      string comm = "XADD " + streamName + " * val " + to_string(avg);
+      redisReply* reply = (redisReply *)redisCommand(this->c, comm.c_str());
+      cout << avg << " mandato su stream " << streamName << endl;
+
+      if (reply == nullptr) {
+          cerr << "Error sending the average to Redis for sensor" << i << endl;
+      }
+
+      freeReplyObject(reply);
+
   }
 }

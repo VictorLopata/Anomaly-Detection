@@ -14,6 +14,10 @@ int main() {
     config cfg;
     redisContext *c;
     redisReply *reply;
+    redisReply* streamReply;
+    redisReply* entriesReply;
+    redisReply* entryReply;
+    redisReply* fieldsReply;
 
     string dec;
 
@@ -70,15 +74,53 @@ int main() {
 
     // Detection started
     printColored(YELL_GRASS, "INIZIO DETECTION...");
-
+    string covAnomaly_id = "$";
+    string avgAnomaly_id = "$";
+    string com;
     while(true) {
-        /**
-         * Listen anomaly_stream and wait for an anomaly.
-         */
+
+        com = "XREAD BLOCK 0 STREAMS covAnomaly avgAnomaly " + covAnomaly_id + " " + avgAnomaly_id;
+        reply = RedisCommand(c, com.c_str());
+
+        if (reply == nullptr) {
+            cerr << "Errore nell'esecuzione del comando XREAD" << endl;
+            break;
+        } else {
+            for (int i = 0; i < reply->elements; ++i) {
+
+                streamReply = reply->element[i];
+                string nomeStream = streamReply->element[0]->str;
+                entriesReply = streamReply->element[1];
+
+                if (nomeStream == "avgAnomaly") {
+                    for (int j = 0; j < entriesReply->elements; ++j) {
+
+                        entryReply = entriesReply->element[j];
+                        string entryID = entryReply->element[0]->str;
+                        fieldsReply = entryReply->element[1];
+
+
+                        for (size_t k = 0; k < fieldsReply->elements; k += 2)
+                        {
+
+                            string campo = fieldsReply->element[k]->str;
+                            double valore = stod(fieldsReply->element[k+1]->str);
+
+                            if (campo == "sensor") {
+                                cout << "Anomalia trovata al sensore " << valore << "; MEDIA ANOMALA: ";
+                            } else {
+                                cout << valore << endl;
+                            }
+
+                        }
+                        avgAnomaly_id = entryID;
+                    }
+                }
+            }
+        }
+        freeReplyObject(reply);
     }
 
-
-    freeReplyObject(reply);
     redisFree(c);
 
     return 0;

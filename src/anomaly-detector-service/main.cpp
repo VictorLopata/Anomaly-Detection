@@ -140,6 +140,8 @@ int main() {
 
                                 if (anomaly) {
                                     sendAnomaly(c, reply, valore, isAvg,stoi(numberPart), numStreamCov);
+                                } else {
+                                    currStreams[ind] = valore;
                                 }
                             }
                             //save2db();

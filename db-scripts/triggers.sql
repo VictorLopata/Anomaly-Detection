@@ -1,4 +1,4 @@
-
+\c :dbname
 -- PROCEDURES
 
 CREATE FUNCTION check_avg_disjoint()
@@ -54,3 +54,5 @@ CREATE TRIGGER covariance_disjoint_time
     ON Covariance
     FOR EACH ROW
     EXECUTE PROCEDURE check_cov_disjoint();
+
+-- [Altro vincolo]

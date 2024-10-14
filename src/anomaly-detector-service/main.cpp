@@ -26,6 +26,10 @@ int main() {
     redisReply* entryReply;
     redisReply* fieldsReply;
 
+    PGresult *query_res;
+    Con2DB db(POSTGRESQL_SERVER, POSTGRESQL_PORT, POSTGRESQL_USER, POSTGRESQL_PSW, POSTGRESQL_DBNAME);
+
+
 
 
     // Connessione a Redis
@@ -48,6 +52,7 @@ int main() {
     int ind;
     bool isAvg;
     bool anomaly;
+    char query[QUERY_LEN];
 
     // Inserimento nomi stream medie e delle covarianze
     for (int i = 0; i < numTotStream; i++){
@@ -96,7 +101,11 @@ int main() {
                 string nomeStream = streamReply->element[0]->str;
                 entriesReply = streamReply->element[1];
 
-                isAvg = ('a' == nomeStream[0]);
+                if ('a' == nomeStream[0]) {
+                    isAvg = true;
+                } else {
+                    isAvg = false;
+                }
                 cout << "------ " << nomeStream << " ------" << endl;
 
 
@@ -119,14 +128,18 @@ int main() {
                     lastID[nomeStream] = entryID;
                     fieldsReply = entryReply->element[1];
 
+                    double valore;
+                    string startTimestamp;
+                    string endTimestamp;
 
                     for (size_t k = 0; k < fieldsReply->elements; k += 2)
                     {
 
                         string campo = fieldsReply->element[k]->str;
-                        double valore = stod(fieldsReply->element[k+1]->str);
-                        cout << "Campo: " << campo << " Valore: " << valore << endl;
+
                         if (campo == "val") {
+                            valore = stod(fieldsReply->element[k+1]->str);
+
                             if (firstTime[ind]) {
 
                                 firstTime[ind] = false;
@@ -144,9 +157,33 @@ int main() {
                                     currStreams[ind] = valore;
                                 }
                             }
-                            //save2db();
+
+                        } else if (campo == "startTimestamp") {
+                            startTimestamp = fieldsReply->element[k+1]->str;
+                            replace(startTimestamp.begin(), startTimestamp.end(), '_', ' ');
+                        } else if (campo == "endTimestamp") {
+                            endTimestamp = fieldsReply->element[k+1]->str;
+                            replace(endTimestamp.begin(), endTimestamp.end(), '_', ' ');
                         }
 
+
+
+                    }
+                    //cout << "Campo: " << campo << " Valore: " << valore << endl;
+                    // Mando al Database.
+                    if (isAvg) {
+                        sprintf(query, "INSERT INTO average (sensor_id, start_timestamp, end_timestamp, value, is_anomaly) VALUES (\'%s\',\'%s\',\'%s\',\'%s\', %s)",
+                                numberPart.c_str(), startTimestamp.c_str(), endTimestamp.c_str(), to_string(valore).c_str(), string(anomaly ? "TRUE" : "FALSE").c_str());
+                    } else {
+                        // TODO: DA MODIFICARE
+                        sprintf(query, "INSERT INTO covariance (sensor_id, value, is_anomaly) VALUES (\'%s\', \'%s\', %s)",
+                                numberPart.c_str(), to_string(valore).c_str(), string(anomaly ? "TRUE" : "FALSE").c_str());
+                    }
+                    query_res = db.RunQuery(query, false);
+
+                    if (PQresultStatus(query_res) != PGRES_COMMAND_OK && PQresultStatus(query_res) != PGRES_TUPLES_OK) {
+                        cout << "Errore durante DB" << endl;
+                        continue;
                     }
 
                 }
@@ -154,7 +191,7 @@ int main() {
         }
         freeReplyObject(reply);
     }
-
+    db.finish();
     redisFree(c);
     return 0;
 }

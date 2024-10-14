@@ -4,9 +4,17 @@
 #include <map>
 #include "../con2redis/con2redis.h"
 #include "../average-service/average.h"
+#include "../con2db/pgsql.h"
 
 #define REDIS_SERVER "localhost"
 #define REDIS_PORT 6379
+#define QUERY_LEN 1000
+
+#define POSTGRESQL_SERVER "localhost"
+#define POSTGRESQL_PORT "5432"
+#define POSTGRESQL_USER "admin"
+#define POSTGRESQL_PSW "admin"
+#define POSTGRESQL_DBNAME "anomalyseeker"
 
 pair<int, int> findPair(int j, int n) {
     int a = 0;
@@ -36,7 +44,7 @@ void sendAnomaly(redisContext *c, redisReply *reply, double anomalValue, bool is
 
 }
 
-void save2db() {
+void save2db(char* query) {
     cout << "Saved in db..." << endl;
 }
 

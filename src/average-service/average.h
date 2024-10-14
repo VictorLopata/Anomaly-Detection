@@ -5,6 +5,14 @@
 #include "../con2redis/con2redis.h"
 #include <map>
 #include "../utils/stream.h"
+#include <chrono>
+#include <iomanip>
+#include <sstream>
+
+
+
+#define REDIS_SERVER "localhost"
+#define REDIS_PORT 6379
 
 using namespace std;
 using namespace chrono;
@@ -21,7 +29,7 @@ class Average {
         void listenStreams();
 
         // This method calculates average from the streams (Sensors in our project)
-        void calculate_averages();
+        void calculate_averages(string startTimestamp, string endTimestamp);
 
 
     private:

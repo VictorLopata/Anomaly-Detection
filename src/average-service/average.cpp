@@ -1,9 +1,13 @@
 #include "average.h"
-#include <iostream>
 
 
-#define REDIS_SERVER "localhost"
-#define REDIS_PORT 6379
+string getCurrentTimestamp() {
+    auto now = system_clock::now();
+    auto in_time_t = system_clock::to_time_t(now);
+    std::stringstream ss;
+    ss << std::put_time(std::localtime(&in_time_t), "%Y-%m-%d %H:%M:%S"); // Formattato come stringa leggibile
+    return ss.str();
+}
 
 Average::Average() {
   c = redisConnect(REDIS_SERVER, REDIS_PORT);
@@ -47,6 +51,7 @@ void Average::listenStreams() {
   }
 
   auto start = steady_clock::now(); //start the timer for W window
+  string startTimestamp = getCurrentTimestamp();
 
   cout << "Ascoltando le stream..." << endl;
   while (true) {
@@ -97,16 +102,17 @@ void Average::listenStreams() {
 
     if (elapsed.count() >= windowSize) {
         cout << "Numero di secondi: " << elapsed.count() << endl;
+        string endTimestamp = getCurrentTimestamp();
+        cout << "START TIMESTAMP: " << startTimestamp << " END TIMESTAMP: " << endTimestamp << endl;
+        calculate_averages(startTimestamp, endTimestamp);
 
-        calculate_averages();
-
-
-        start = steady_clock::now();  // Reset the timer for the next window
+        start = steady_clock::now();
+        startTimestamp = getCurrentTimestamp(); // Reset the timer for the next window
     }
   }
 }
 
-void Average::calculate_averages() {
+void Average::calculate_averages(string startTimestamp, string endTimestamp) {
 
   for (int i = 0; i < n_sensors; i++) {
       if (str_info[i].count == 0) {
@@ -118,8 +124,9 @@ void Average::calculate_averages() {
       str_info[i].count = 0;
       string streamName = "a#" + to_string(i);
 
-
-      string comm = "XADD " + streamName + " * val " + to_string(avg);
+      replace(startTimestamp.begin(), startTimestamp.end(), ' ', '_');
+      replace(endTimestamp.begin(), endTimestamp.end(), ' ', '_');
+      string comm = "XADD " + streamName + " * val " + to_string(avg) + " startTimestamp " + startTimestamp + " endTimestamp " + endTimestamp;
       redisReply* reply = (redisReply *)redisCommand(this->c, comm.c_str());
       cout << avg << " mandato su stream " << streamName << endl;
 

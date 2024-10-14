@@ -6,10 +6,11 @@ CREATE DOMAIN IntGEZ AS integer CHECK (VALUE >= 0);
 CREATE TABLE IF NOT EXISTS Average(
     id SERIAL PRIMARY KEY,
     sensor_id IntGEZ NOT NULL,
-    start_timestamp timestamp NOT NULL,
+    start_timestamp timestamp  NOT NULL,
     end_timestamp timestamp NOT NULL,
     value float,
     is_anomaly BOOLEAN NOT NULL DEFAULT FALSE,
+    calculate_at timestamp DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT start_gz_end CHECK (end_timestamp > start_timestamp),
     CONSTRAINT unique_sensor_av UNIQUE (sensor_id, start_timestamp)
 );
@@ -22,6 +23,7 @@ CREATE TABLE IF NOT EXISTS Covariance(
     end_timestamp timestamp NOT NULL,
     value float,
     is_anomaly BOOLEAN NOT NULL DEFAULT FALSE,
+    calculate_at timestamp DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT start_gz_end CHECK (end_timestamp > start_timestamp),
     CONSTRAINT unique_sensor_cov UNIQUE (sensor1_id , sensor2_id , start_timestamp),
     CONSTRAINT diff_sens CHECK (sensor1_id != sensor2_id)

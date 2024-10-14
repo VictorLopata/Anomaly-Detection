@@ -88,8 +88,8 @@ PGresult* Con2DB::ExecSQLcmd(char *sqlcmd)
         fprintf(stderr, "ExecSQLcmd(): PQresultErrorMessage: %s\n",
                 PQresultErrorMessage(res) ) ;
 
-        PQclear(res);
-        finish();
+        //PQclear(res);
+        // finish();
     }
 
 #if 0
@@ -108,7 +108,7 @@ PGresult* Con2DB::ExecSQLtuples(char *sqlcmd)
         // error
     {
         fprintf(stderr, "ExecSQLtuples(): no connection to DB: sqlcmd = %s\n", sqlcmd);
-        exit (1);
+        // exit (1);
     }
 
     // conn != NULL
@@ -118,11 +118,12 @@ PGresult* Con2DB::ExecSQLtuples(char *sqlcmd)
     if (PQresultStatus(res) != PGRES_TUPLES_OK) {
 
         fprintf(stderr, "ExecSQLtuples(): SQL command failed: %s\n", sqlcmd);
-        fprintf(stderr, "ExecSQLtuples(): %s\n",
-                PQresStatus(PQresultStatus(res)));
+        fprintf(stderr, "ExecSQLtuples(): %s\n", PQresStatus(PQresultStatus(res)));
+        fprintf(stderr, "ExecSQLcmd(): PQresultErrorMessage: %s\n",
+                PQresultErrorMessage(res) ) ;
 
-        PQclear(res);
-        finish();
+        // PQclear(res);
+        // finish();
     }
 
 #if 0
@@ -130,6 +131,49 @@ PGresult* Con2DB::ExecSQLtuples(char *sqlcmd)
 #endif
 
     return (res);
+}
+
+PGresult* Con2DB::RunQuery(char* query, bool has_tuples) {
+    PGresult* trans_res;
+    PGresult* query_res;
+
+    char sqlCmd[7];
+
+    // open transaction
+    sprintf(sqlCmd, "BEGIN");
+    trans_res = ExecSQLcmd(sqlCmd);
+
+    // if not ok
+    if (PQresultStatus(trans_res) != PGRES_COMMAND_OK) {
+        PQclear(trans_res);
+        return trans_res;
+    }
+
+    PQclear(trans_res);
+
+    // execute query
+    query_res = !has_tuples ? ExecSQLcmd(query) : ExecSQLtuples(query);
+
+    // close transaction
+    sprintf(sqlCmd, "COMMIT");
+    trans_res = ExecSQLcmd(sqlCmd);
+
+    // if an error occurred during query execution
+    if(PQresultStatus(query_res) != PGRES_COMMAND_OK && PQresultStatus(query_res) != PGRES_TUPLES_OK){
+        PQclear(trans_res);
+        PQclear(query_res);
+        return query_res;
+    }
+    else if(PQresultStatus(trans_res) != PGRES_COMMAND_OK){
+        PQclear(query_res);
+        PQclear(trans_res);
+        return trans_res;
+    }
+    else{
+        PQclear(trans_res);
+        if (PQresultStatus(query_res) != PGRES_TUPLES_OK) PQclear(query_res);
+        return query_res;
+    }
 }
 
 

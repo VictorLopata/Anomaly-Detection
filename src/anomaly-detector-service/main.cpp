@@ -26,6 +26,10 @@ int main() {
     redisReply* entryReply;
     redisReply* fieldsReply;
 
+    PGresult *query_res;
+    Con2DB db(POSTGRESQL_SERVER, POSTGRESQL_PORT, POSTGRESQL_USER, POSTGRESQL_PSW, POSTGRESQL_DBNAME);
+
+
 
 
     // Connessione a Redis
@@ -40,14 +44,23 @@ int main() {
     vector<string> streams(numTotStream);
     vector<double> avgCurr(conf.num_streams, 0.0);
     vector<double> covCurr(numStreamCov, 0.0);
+    vector<double> currStreams(numTotStream);
+    vector<bool> firstTime(numTotStream, true);
+
+    size_t pos;
+    string numberPart;
+    int ind;
+    bool isAvg;
+    bool anomaly;
+    char query[QUERY_LEN];
 
     // Inserimento nomi stream medie e delle covarianze
     for (int i = 0; i < numTotStream; i++){
         string strName;
         if (i < conf.num_streams) {
-            strName = "avgS" + to_string(i);
+            strName = "a#" + to_string(i);
         } else {
-            strName = "covN" + to_string(i);
+            strName = "c#" + to_string(i);
         }
         streams[i] = strName;
     }
@@ -56,58 +69,129 @@ int main() {
     // Mappa per tenere traccia degli ultimi ID letti per ogni stream
     std::map<std::string, std::string> lastID;
     for (const auto& streamName : streams) {
-        lastID[streamName] = "$";
+        lastID[streamName] = get_last_message_id(c, streamName);
     }
 
 
+    cout << "Ora ascolto le stream ....." << endl;
+    string comGen = "XREAD BLOCK 0 STREAMS";
+
+    for (int i = 0; i < numTotStream; i++) {
+        comGen += " " + streams[i];
+    }
+    string com;
+
     while (true) {
         // Composizione del comando XREAD
-        string com = "XREAD COUNT 1 BLOCK 0 STREAMS";
-        for (int i = 0; i < numTotStream; i++) {
-            com += " " + streams[i];
-        }
-
+        com = comGen;
         for (int i = 0; i < numTotStream; i++) {
             com += " " + lastID[streams[i]];
         }
+
         // Esecuzione comando
         reply = RedisCommand(c, com.c_str());
+
         if (reply == nullptr) {
             cerr << "Errore nell'esecuzione del comando XREAD" << endl;
             break;
         } else {
-            for (int i = 0; i < reply->elements; ++i) {
+            for (size_t i = 0; i < reply->elements; ++i) {
 
                 streamReply = reply->element[i];
                 string nomeStream = streamReply->element[0]->str;
                 entriesReply = streamReply->element[1];
 
-                for (int j = 0; j < entriesReply->elements; ++j) {
+                if ('a' == nomeStream[0]) {
+                    isAvg = true;
+                } else {
+                    isAvg = false;
+                }
+                cout << "------ " << nomeStream << " ------" << endl;
+
+
+                pos = nomeStream.find('#');
+                numberPart = nomeStream.substr(pos + 1);
+                ind = stoi(numberPart);
+
+
+
+                if (!isAvg) {
+                    ind = conf.num_streams + ind;
+                }
+
+
+                for (size_t j = 0; j < entriesReply->elements; ++j) {
+
 
                     entryReply = entriesReply->element[j];
                     string entryID = entryReply->element[0]->str;
+                    lastID[nomeStream] = entryID;
                     fieldsReply = entryReply->element[1];
+
+                    double valore;
+                    string startTimestamp;
+                    string endTimestamp;
 
                     for (size_t k = 0; k < fieldsReply->elements; k += 2)
                     {
-                        /**
-                         * TODO: Confronta il valore v della stream s con il valore vc presente nel vettore.
-                         * TODO: Se |v - vc| > threshold, allora invia anomalia al processo user-interaction-service e salva nel DB con i valori corrispondenti.
-                         * TODO: Altrimenti salva nel DB.
-                         *
-                         * Dovremmo salvare anche i log nel db.
-                         */
+
                         string campo = fieldsReply->element[k]->str;
-                        string valore = fieldsReply->element[k+1]->str;
+
+                        if (campo == "val") {
+                            valore = stod(fieldsReply->element[k+1]->str);
+
+                            if (firstTime[ind]) {
+
+                                firstTime[ind] = false;
+                                currStreams[ind] = valore;
+
+                            } else {
+
+                                // Controlla se è presente l'anomalia.
+                                anomaly = abs(valore - currStreams[ind]) > conf.threshold;
+                                // cout << "Valore precedente: " << currStreams[ind] << "    Valore attuale: " << valore << "    Anomaly: " << anomaly << endl;
+
+                                if (anomaly) {
+                                    sendAnomaly(c, reply, valore, isAvg,stoi(numberPart), numStreamCov);
+                                } else {
+                                    currStreams[ind] = valore;
+                                }
+                            }
+
+                        } else if (campo == "startTimestamp") {
+                            startTimestamp = fieldsReply->element[k+1]->str;
+                            replace(startTimestamp.begin(), startTimestamp.end(), '_', ' ');
+                        } else if (campo == "endTimestamp") {
+                            endTimestamp = fieldsReply->element[k+1]->str;
+                            replace(endTimestamp.begin(), endTimestamp.end(), '_', ' ');
+                        }
+
+
+
+                    }
+                    //cout << "Campo: " << campo << " Valore: " << valore << endl;
+                    // Mando al Database.
+                    if (isAvg) {
+                        sprintf(query, "INSERT INTO average (sensor_id, start_timestamp, end_timestamp, value, is_anomaly) VALUES (\'%s\',\'%s\',\'%s\',\'%s\', %s)",
+                                numberPart.c_str(), startTimestamp.c_str(), endTimestamp.c_str(), to_string(valore).c_str(), string(anomaly ? "TRUE" : "FALSE").c_str());
+                    } else {
+                        // TODO: DA MODIFICARE
+                        sprintf(query, "INSERT INTO covariance (sensor_id, value, is_anomaly) VALUES (\'%s\', \'%s\', %s)",
+                                numberPart.c_str(), to_string(valore).c_str(), string(anomaly ? "TRUE" : "FALSE").c_str());
+                    }
+                    query_res = db.RunQuery(query, false);
+
+                    if (PQresultStatus(query_res) != PGRES_COMMAND_OK && PQresultStatus(query_res) != PGRES_TUPLES_OK) {
+                        cout << "Errore durante DB" << endl;
+                        continue;
                     }
 
-                    lastID[nomeStream] = entryID;
                 }
             }
         }
         freeReplyObject(reply);
     }
-
+    db.finish();
     redisFree(c);
     return 0;
 }

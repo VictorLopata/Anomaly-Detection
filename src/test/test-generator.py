@@ -3,7 +3,7 @@ import time
 import redis
 
 FILE_CSV = './csvfiles/file1.csv'
-N_SENSOR = 100
+N_SENSOR = 10
 current_time = None
 s_data = {}
 
@@ -16,7 +16,7 @@ def send(sensor_data: dict):
     print("Mando i dati:")
     for sId, v in sensor_data.items():
         print(f'Value = {v}         Sensor = {sId}')
-        stream = f'sensor:{sId}'
+        stream = f'stream#{sId}'
         data  = {
             'Value': v
         }
@@ -38,6 +38,8 @@ with open(FILE_CSV, mode='r') as csvfile:
         # Controllo se value è definito
         if value != 'NULL':
             value = float(value)
+        else:
+            continue
 
         if current_time is None:
             current_time = sample_time

@@ -3,7 +3,7 @@ project(Anomaly-Detection)
 
 set(CMAKE_CXX_STANDARD 11)
 
-add_executable(Anomaly-Detection src/main.cpp
+add_executable(
         src/average-service/main.cpp
         src/average-service/average.cpp
 

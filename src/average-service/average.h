@@ -4,6 +4,15 @@
 #include <iostream>
 #include "../con2redis/con2redis.h"
 #include <map>
+#include "../utils/stream.h"
+#include <chrono>
+#include <iomanip>
+#include <sstream>
+
+
+
+#define REDIS_SERVER "localhost"
+#define REDIS_PORT 6379
 
 using namespace std;
 using namespace chrono;
@@ -11,7 +20,7 @@ using namespace chrono;
 class Average {
     public:
         // Constructor for connecting to Redis
-        Average(const string& redis_host, const string& redis_port, int n_sensors, int windowSize);
+        Average();
 
         // Destructor for cleaning the connection
         ~Average();
@@ -20,7 +29,7 @@ class Average {
         void listenStreams();
 
         // This method calculates average from the streams (Sensors in our project)
-        void calculate_averages();
+        void calculate_averages(string startTimestamp, string endTimestamp);
 
 
     private:
@@ -30,12 +39,9 @@ class Average {
 
         int n_sensors; // Number of streams (sensors)
         int windowSize; // Time W after which we compute the average
-        vector<double> values; // This contains all the averages for each stream
-        int count; //  This count the number of values which I accept during the window W
+        vector<window_stream> str_info; // This contains all the averages for each stream
 
 
-        // This method flush the previous values of the stream in order to accept the new ones
-        void cleanVectors();
 
 };
 

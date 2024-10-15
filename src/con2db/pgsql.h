@@ -32,6 +32,9 @@ public:
 /* use this for commands returning data, e.g. SELECT */
     PGresult* ExecSQLtuples(char *sqlcmd);
 
+    PGresult* RunQuery(char* query, bool is_tuples);
+
+
     /* disconnect from DB */
     void finish();
 

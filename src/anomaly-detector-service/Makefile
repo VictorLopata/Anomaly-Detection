@@ -1,11 +1,11 @@
 # Variabili
 CXX = g++
-CXXFLAGS = -std=c++11 -Wall -I/opt/homebrew/include
-LDFLAGS = -L/opt/homebrew/lib -lhiredis
+CXXFLAGS = -std=c++11 -Wall -I/opt/homebrew/include -I/opt/homebrew/opt/postgresql/include
+LDFLAGS = -L/opt/homebrew/lib -lhiredis -L/opt/homebrew/opt/postgresql/lib -lpq
 TARGET = anomaly-detector-service
-SRC = main.cpp ./../con2redis/redisfun.cpp
+SRC = main.cpp ./../con2redis/redisfun.cpp ./../con2db/pgsql.cpp
 OBJ_DIR = obj
-OBJ = $(OBJ_DIR)/main.o $(OBJ_DIR)/redisfun.o
+OBJ = $(OBJ_DIR)/main.o $(OBJ_DIR)/redisfun.o $(OBJ_DIR)/pgsql.o
 
 # Regole
 all: $(OBJ_DIR) $(TARGET)
@@ -21,6 +21,10 @@ $(OBJ_DIR)/main.o: main.cpp
 # Compila il file oggetto redisfun.cpp
 $(OBJ_DIR)/redisfun.o: ./../con2redis/redisfun.cpp
 	$(CXX) $(CXXFLAGS) -c ./../con2redis/redisfun.cpp -o $(OBJ_DIR)/redisfun.o
+
+# Compila il file oggetto pgsql.cpp
+$(OBJ_DIR)/pgsql.o: ./../con2db/pgsql.cpp
+	$(CXX) $(CXXFLAGS) -c ./../con2db/pgsql.cpp -o $(OBJ_DIR)/pgsql.o
 
 # Linka i file oggetto per creare l'eseguibile
 $(TARGET): $(OBJ)

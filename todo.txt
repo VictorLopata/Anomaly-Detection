@@ -1,0 +1,5 @@
+1) 2 Monitor non funzionali
+2) 1 Monitor funzionale
+3) Relazione
+4) Sistemare vari bug
+5) Sistemare leggibilità

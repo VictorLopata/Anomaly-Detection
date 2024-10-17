@@ -15,3 +15,4 @@ void update_cov(int& n, double& avgX, double& avgY, double& cov, double newX, do
     // Update covariances
     cov += (deltaX * deltaY - cov) / n;
 }
+

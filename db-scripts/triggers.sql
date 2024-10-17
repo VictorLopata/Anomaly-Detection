@@ -38,8 +38,30 @@ END;
 $$;
 
 
+CREATE OR REPLACE FUNCTION prevent_time_overlap() RETURNS TRIGGER AS $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM Average
+        WHERE sensor_id = NEW.sensor_id
+          AND (NEW.start_timestamp, NEW.end_timestamp) OVERLAPS (start_timestamp, end_timestamp)
+          AND id <> NEW.id
+    ) THEN
+        RAISE EXCEPTION 'Time intervals for the same sensor cannot overlap.';
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
 
 -- TRIGGERS
+
+
+
+CREATE TRIGGER trg_prevent_time_overlap
+    BEFORE INSERT OR UPDATE ON Average
+    FOR EACH ROW
+EXECUTE FUNCTION prevent_time_overlap();
+
 
 -- [Vincolo Average Disjoint]
 CREATE TRIGGER average_disjoint_time
@@ -55,4 +77,3 @@ CREATE TRIGGER covariance_disjoint_time
     FOR EACH ROW
     EXECUTE PROCEDURE check_cov_disjoint();
 
--- [Altro vincolo]

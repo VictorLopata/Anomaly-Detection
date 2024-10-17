@@ -1,8 +1,35 @@
-//
-// Created by Victor Lopata on 13/10/24.
-//
+#ifndef non_functional_req_h
+#define non_functional_req_h
 
-#ifndef ANOMALY_DETECTION_MAIN_H
-#define ANOMALY_DETECTION_MAIN_H
+#include <cstring>
+#include <iostream>
+#include <stdio.h>
+#include <fcntl.h>
+#include <stdlib.h>
+#include <sys/ioctl.h>
+#include <sys/socket.h>
+#include <sys/time.h>
+#include <arpa/inet.h>
+#include <netinet/in.h>
+#include <errno.h>
+#include <unistd.h>
+#include <cerrno>
+#include <vector>
+#include <sstream>
 
-#endif //ANOMALY_DETECTION_MAIN_H
+#include "../con2db/pgsql.h"
+
+
+#define MAX_CONNECTION_TIME_AVG 30000.0
+#define MAX_RESPONSE_TIME_AVG 30000.0
+
+#define POSTGRESQL_SERVER "localhost"
+#define POSTGRESQL_PORT "5432"
+#define POSTGRESQL_USER "admin"
+#define POSTGRESQL_PSW "admin"
+#define POSTGRESQL_DBNAME "anomalyseeker"
+#define QUERY_LEN 1500
+
+using namespace std;
+
+#endif

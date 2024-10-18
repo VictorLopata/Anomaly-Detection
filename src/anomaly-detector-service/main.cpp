@@ -144,6 +144,7 @@ int main() {
 
                                 firstTime[ind] = false;
                                 currStreams[ind] = valore;
+                                anomaly = false;
 
                             } else {
 
@@ -172,17 +173,20 @@ int main() {
                     //cout << "Campo: " << campo << " Valore: " << valore << endl;
                     // Mando al Database.
                     if (isAvg) {
-                        sprintf(query, "INSERT INTO average (sensor_id, start_timestamp, end_timestamp, value, is_anomaly) VALUES (\'%s\',\'%s\',\'%s\',\'%s\', %s)",
+                        cout << "RICEVUTA MEDIA DEL SENSORE " << stoi(numberPart) << ". AVG = " << valore << endl;
+                        sprintf(query, "INSERT INTO average (sensor_id, start_timestamp, end_timestamp, value, is_anomaly) VALUES (%s,\'%s\',\'%s\',%s, %s);",
                                 numberPart.c_str(), startTimestamp.c_str(), endTimestamp.c_str(), to_string(valore).c_str(), string(anomaly ? "TRUE" : "FALSE").c_str());
                     } else {
-                        // TODO: DA MODIFICARE
-                        sprintf(query, "INSERT INTO covariance (sensor_id, value, is_anomaly) VALUES (\'%s\', \'%s\', %s)",
-                                numberPart.c_str(), to_string(valore).c_str(), string(anomaly ? "TRUE" : "FALSE").c_str());
+                        // pair<int, int> p = findPair(stoi(numberPart), numStreamCov);
+                        pair<int, int> p = indexToPair(stoi(numberPart), conf.num_streams);
+                        cout << "RICEVUTA COVARIANZA TRA SENSORE " << p.first << " E SENSORE " << p.second << " (" << stoi(numberPart) << ")" << ". COV: " << valore <<endl;
+                        sprintf(query, "INSERT INTO covariance (sensor1_id, sensor2_id, start_timestamp, end_timestamp, value, is_anomaly) VALUES (%d, %d, \'%s\', \'%s\',%f, %s);",
+                                p.first,p.second, startTimestamp.c_str(), endTimestamp.c_str(), valore, string(anomaly ? "TRUE" : "FALSE").c_str());
                     }
                     query_res = db.RunQuery(query, false);
 
-                    if (PQresultStatus(query_res) != PGRES_COMMAND_OK && PQresultStatus(query_res) != PGRES_TUPLES_OK) {
-                        cout << "Errore durante DB" << endl;
+                    if (PQresultStatus(query_res) != PGRES_COMMAND_OK) {
+                        cout << "Errore durante DB: " << PQresultStatus(query_res) << endl;
                         continue;
                     }
 

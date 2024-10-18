@@ -92,30 +92,38 @@ int main() {
                 string nomeStream = streamReply->element[0]->str;
                 entriesReply = streamReply->element[1];
 
-                if (nomeStream == "avgAnomaly") {
-                    for (int j = 0; j < entriesReply->elements; ++j) {
+                for (int j = 0; j < entriesReply->elements; ++j) {
 
-                        entryReply = entriesReply->element[j];
-                        string entryID = entryReply->element[0]->str;
-                        fieldsReply = entryReply->element[1];
+                    entryReply = entriesReply->element[j];
+                    string entryID = entryReply->element[0]->str;
+                    fieldsReply = entryReply->element[1];
 
 
-                        for (size_t k = 0; k < fieldsReply->elements; k += 2)
-                        {
+                    for (size_t k = 0; k < fieldsReply->elements; k += 2)
+                    {
 
-                            string campo = fieldsReply->element[k]->str;
-                            double valore = stod(fieldsReply->element[k+1]->str);
+                        string campo = fieldsReply->element[k]->str;
+                        double valore = stod(fieldsReply->element[k+1]->str);
 
+                        if (nomeStream == "avgAnomaly") {
                             if (campo == "sensor") {
                                 cout << "Anomalia trovata al sensore " << valore << "; MEDIA ANOMALA: ";
                             } else {
                                 cout << valore << endl;
                             }
-
+                        } else if (nomeStream == "covAnomaly") {
+                            if (campo == "anomalValue") {
+                                cout << campo << ": " << valore << endl;
+                            } else {
+                                cout << campo << ": " << valore << "  ";
+                            }
                         }
-                        avgAnomaly_id = entryID;
+
+
                     }
+                    avgAnomaly_id = entryID;
                 }
+
             }
         }
         freeReplyObject(reply);

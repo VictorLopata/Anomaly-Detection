@@ -32,6 +32,24 @@ pair<int, int> findPair(int j, int n) {
     return make_pair(a,b);
 }
 
+std::pair<int, int> indexToPair(int idx, int N) {
+    int low = 0, high = N - 1;
+    int i = -1;
+    while (low <= high) {
+        int mid = (low + high) / 2;
+        int s_mid = mid * (2 * N - mid - 1) / 2;
+        if (s_mid <= idx) {
+            i = mid;
+            low = mid + 1;
+        } else {
+            high = mid - 1;
+        }
+    }
+    int s_i = i * (2 * N - i - 1) / 2;
+    int j = i + (idx - s_i) + 1;
+    return make_pair(i,j);
+}
+
 void sendAnomaly(redisContext *c, redisReply *reply, double anomalValue, bool isAvg, int j, int n) {
 
     string com;

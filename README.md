@@ -18,6 +18,6 @@ vamente da quelli correnti lancia un allarme.
     3. Un sistema che dalle stream Redis calcola la coviaranza per ogni coppia
         di stream e la salva nel DB.
         
-   4. Monitors per almeno tre proprietà funzionali.
+    4. Monitors per almeno tre proprietà funzionali.
       
     5. Monitors per almeno due proprietà non-funzionali.

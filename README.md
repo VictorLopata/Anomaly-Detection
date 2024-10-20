@@ -1,12 +1,14 @@
 # Anomaly-Detection
 Si progetti un semplice sistema di anomaly detection per uno stream di dati.
+
 Il rilevatore di anomalie calcola il valor medio di ogni stream e la covarianza
 dell’insieme di streams (visto come una serie temporale multivariata) su una
 finestra temporale di ampiezza W configurabile.
+
 Ogni volta che uno dei valori medi o delle covarianze si discosta significati­
 vamente da quelli correnti lancia un allarme.
 
-    Il progetto deve includere i seguenti componenti.
+Il progetto deve includere i seguenti componenti.
 
     1. Un modello (test generator) che legge uno stream di dati da file csv e lo
         manda su altrettante streams Redis. Un possibile file csv con dati reali

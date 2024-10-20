@@ -1,6 +1,6 @@
 # Anomaly-Detection
 Si progetti un semplice sistema di anomaly detection per uno stream di dati.
-    Il rilevatore di anomalie calcola il valor medio di ogni stream e la covarianza
+/nIl rilevatore di anomalie calcola il valor medio di ogni stream e la covarianza
 dell’insieme di streams (visto come una serie temporale multivariata) su una
 finestra temporale di ampiezza W configurabile.
     Ogni volta che uno dei valori medi o delle covarianze si discosta significati­

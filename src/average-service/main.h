@@ -2,8 +2,6 @@
 #define MAIN_H
 
 
-class main {
 
-};
 
 #endif //MAIN_H

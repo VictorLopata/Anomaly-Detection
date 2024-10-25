@@ -38,7 +38,7 @@ END;
 $$;
 
 
-CREATE OR REPLACE FUNCTION prevent_time_overlap() RETURNS TRIGGER AS $$
+CREATE OR REPLACE FUNCTION time_overlap() RETURNS TRIGGER AS $$
 BEGIN
     IF EXISTS (
         SELECT 1 FROM Average
@@ -57,10 +57,10 @@ $$ LANGUAGE plpgsql;
 
 
 
-CREATE TRIGGER trg_prevent_time_overlap
+CREATE TRIGGER check_time_overlap
     BEFORE INSERT OR UPDATE ON Average
     FOR EACH ROW
-EXECUTE FUNCTION prevent_time_overlap();
+EXECUTE FUNCTION time_overlap();
 
 
 -- [Vincolo Average Disjoint]

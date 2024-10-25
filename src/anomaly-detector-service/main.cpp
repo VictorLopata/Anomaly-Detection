@@ -154,6 +154,7 @@ int main() {
                                     sendAnomaly(c, reply, valore, isAvg,stoi(numberPart), numStreamCov);
                                 } else {
                                     currStreams[ind] = valore;
+                                    currStreams[ind] /= 2;
                                 }
                             }
 

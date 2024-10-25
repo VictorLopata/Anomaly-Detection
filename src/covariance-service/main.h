@@ -151,6 +151,7 @@ bool get_stream_data(redisContext* c, string command, std::unordered_map<int, st
 
                     string field = fieldsReply->element[k]->str;
                     double value = stof(fieldsReply->element[k + 1]->str);
+
                     cout << "RICEVUTO VALORE DA SensorID: " << sensorIdx << " Value: " << value << endl;
                     streams_data[sensorIdx].push_back(value);
 

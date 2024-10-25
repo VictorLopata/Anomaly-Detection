@@ -29,22 +29,24 @@ int main() {
     vector<string> streams;
     map<string, string> lastIDs;
 
-    // Inserimento nomi stream delle medie e delle covarianze
+    // Inserimento nomi stream medie e delle covarianze
     for (int i = 0; i < conf.num_streams; i++) {
-        streams.push_back("stream#" + to_string(i));
+        streams.push_back("str#" + to_string(i));
     }
+    streams.push_back("end");
 
     for (const auto &stream : streams) {
         lastIDs[stream] = get_last_message_id(c, stream);
     }
 
 
-
+    string startTimestamp;
+    string endTimestamp;
+    bool end = false;
+    std::unordered_map<int, std::vector<double> > streams_data;
     while (true) {
-        string startTimestamp = getCurrentTimestamp();
         string command = "XREAD BLOCK 0 STREAMS";
 
-        // Costruzione del commando da inviare a Redis
         for (const auto &stream : streams) {
             command += " " + stream;
         }
@@ -52,26 +54,64 @@ int main() {
             command += " " + lastIDs[stream];
         }
 
+        // std::cout << "Time window (seconds): " << w << " | Data stream n : " << n << std::endl;
 
-        this_thread::sleep_for(seconds(int(conf.W)));
 
-        unordered_map<int, vector<double> > streams_data;
+
+
         for (const auto &stream : streams) {
             //cout <<  stream << ": " + lastIDs[stream] << endl;
         }
 
         cout << "[" << getCurrentTimestamp() << "]" << " Get stream data..." << endl;
-        get_stream_data(c, command, streams_data, lastIDs);
+        // get_stream_data(c, command, streams_data, lastIDs);
+
+        redisReply* reply = (redisReply *)redisCommand(c, command.c_str());
+        if (reply && reply->type == REDIS_REPLY_ARRAY) {
+            for (size_t i = 0; i < reply->elements; ++i) {
+
+                redisReply* streamReply = reply->element[i];
+                string streamName = streamReply->element[0]->str;
+                redisReply* entriesReply = streamReply->element[1];
+
+                for (size_t j = 0; j < entriesReply->elements; ++j) {
+                    redisReply* entryReply = entriesReply->element[j];
+                    string entryID = entryReply->element[0]->str;
+                    redisReply* fieldsReply = entryReply->element[1];
+
+                    for (size_t k = 0; k < fieldsReply->elements; k += 2) {
+                        string field = fieldsReply->element[k]->str;
+                        string value = fieldsReply->element[k + 1]->str;
+                        int sensorIdx = distance(streams.begin(), find(streams.begin(), streams.end(), streamName));
+
+                        // Add value to the corresponding index of the stream
+                        if (streamName == "end" && value == "ok") {
+                            end = true;
+
+                        }
+                        else if (field == "val") {
+                            cout << "RICEVUTO VALORE DA SensorID: " << sensorIdx << " Value: " << value << endl;
+                            streams_data[sensorIdx].push_back(stof(value));
+                        } else if (field == "startTimestamp") {
+                            startTimestamp = value;
+                        } else if (field == "endTimestamp") {
+                            endTimestamp = value;
+                        }
+
+                    }
+
+                    lastIDs[streamName] = entryID; // Update the last ID
+                }
+            }
+        }
 
 
-
-        string endTimestamp = getCurrentTimestamp();
-
-        replace(startTimestamp.begin(), startTimestamp.end(), ' ', '_');
-        replace(endTimestamp.begin(), endTimestamp.end(), ' ', '_');
-        cout << "CALCULATING COVARIANCE..." << endl;
-        calculate_cov(c, streams_data, startTimestamp, endTimestamp, conf.num_streams);
-
+        if (end) {
+            cout << "CALCULATING COVARIANCE..." << endl;
+            calculate_cov(c, streams_data, startTimestamp, endTimestamp, conf.num_streams);
+            streams_data.clear();
+            end = false;
+        }
 
     }
 

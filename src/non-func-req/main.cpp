@@ -51,27 +51,20 @@ int main() {
         } else {
             sprintf(response_status, "ERROR");
         }
-/**
 
-        sprintf(query, "INSERT INTO SessionStatistic(type, end_instant, value, response_status) VALUES ('Session', CURRENT_TIMESTAMP, %s, \'%s\')", average, response_status);
+
+        sprintf(query, "INSERT INTO SessionLogs(type, value, status) VALUES ('Average', %s, \'%s\')", average, response_status);
 
         query_res = db.RunQuery(query, false);
 
-        if (PQresultStatus(query_res) != PGRES_COMMAND_OK && PQresultStatus(query_res) != PGRES_TUPLES_OK) {
-            printf("DB_ERROR\n");
-            continue;
-        }
-         *
- */
+
+
 
         sprintf(query, "SELECT EXTRACT(EPOCH FROM AVG(calculate_at - end_timestamp)) * 1000 as avg FROM Covariance");
 
         query_res = db.RunQuery(query, true);
 
-        if ((PQresultStatus(query_res) != PGRES_COMMAND_OK && PQresultStatus(query_res) != PGRES_TUPLES_OK) || PQntuples(query_res) <= 0) {
-            printf("DB_ERROR\n");
-            continue;
-        }
+
 
         average = PQgetvalue(query_res, 0, PQfnumber(query_res, "avg"));
 
@@ -85,16 +78,12 @@ int main() {
         } else {
             sprintf(response_status, "ERROR");
         }
-/**
-        sprintf(query, "INSERT INTO SessionStatistic(type, end_instant, value, response_status) VALUES ('Response', CURRENT_TIMESTAMP, %s, \'%s\')", average, response_status);
 
-        query_res = log_db.RunQuery(query, false);
+        sprintf(query, "INSERT INTO SessionLogs(type, value, status) VALUES ('Covariance', %s, \'%s\')", average, response_status);
 
-        if (PQresultStatus(query_res) != PGRES_COMMAND_OK && PQresultStatus(query_res) != PGRES_TUPLES_OK) {
-            printf("DB_ERROR\n");
-            continue;
-        }
-     **/
+        query_res = db.RunQuery(query, false);
+
+
 
         micro_sleep(60000000);
     }

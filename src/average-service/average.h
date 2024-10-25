@@ -17,6 +17,7 @@
 using namespace std;
 using namespace chrono;
 
+
 class Average {
     public:
         // Constructor for connecting to Redis

@@ -1,5 +1,32 @@
 #include "average.h"
 
+std::string get_last_message_id(redisContext* context, const std::string& stream_name) {
+    // Eseguiamo il comando XINFO STREAM <stream_name>
+    redisReply* reply = (redisReply*) redisCommand(context, "XINFO STREAM %s", stream_name.c_str());
+
+
+
+    // Troviamo l'ID dell'ultimo messaggio ("last-entry")
+    std::string last_message_id = "";
+    for (size_t i = 0; i < reply->elements; i += 2) {
+        std::string key(reply->element[i]->str);
+        if (key == "last-entry") {
+            if (reply->element[i + 1]->type == REDIS_REPLY_ARRAY && reply->element[i + 1]->elements > 0) {
+                last_message_id = reply->element[i + 1]->element[0]->str;
+            }
+            break;
+        }
+    }
+
+    // Libera la memoria allocata per la risposta
+    freeReplyObject(reply);
+    if (last_message_id == "") {
+        last_message_id = "0";
+    }
+
+    return last_message_id;
+}
+
 
 string getCurrentTimestamp() {
     auto now = system_clock::now();
@@ -34,8 +61,9 @@ Average::Average() {
 
   // This initializes the stream names which we are listening
   for (int i = 0; i < n_sensors; i++) {
-    streams.push_back("stream#" + to_string(i));
+    streams.push_back("str#" + to_string(i));
   }
+  streams.push_back("end");
 
 }
 
@@ -47,15 +75,17 @@ Average::~Average() {
 
 void Average::listenStreams() {
   for (const auto &stream : streams) {
-    lastIDs[stream] = "$";
+    lastIDs[stream] = get_last_message_id(c, stream);
   }
 
   auto start = steady_clock::now(); //start the timer for W window
-  string startTimestamp = getCurrentTimestamp();
+  string startTimestamp;
+  string endTimestamp;
 
+  bool end = false;
   cout << "Ascoltando le stream..." << endl;
   while (true) {
-    string command = "XREAD COUNT 1 BLOCK 0 STREAMS";
+    string command = "XREAD BLOCK 0 STREAMS";
 
     for (const auto &stream : streams) {
       command += " " + stream;
@@ -65,8 +95,12 @@ void Average::listenStreams() {
     }
 
 
+
+
+
     // Execute the command
     redisReply* reply = (redisReply *)redisCommand(c, command.c_str());
+    cout << "RICEVUTO BLOCCO "<< endl;
     if (reply && reply->type == REDIS_REPLY_ARRAY) {
       for (size_t i = 0; i < reply->elements; ++i) {
 
@@ -81,13 +115,24 @@ void Average::listenStreams() {
 
           for (size_t k = 0; k < fieldsReply->elements; k += 2) {
             string field = fieldsReply->element[k]->str;
-            double value = stof(fieldsReply->element[k + 1]->str);
+            string value = fieldsReply->element[k + 1]->str;
             int sensorIdx = distance(streams.begin(), find(streams.begin(), streams.end(), streamName));
 
             // Add value to the corresponding index of the stream
-            // cout << "RICEVUTO VALORE DA SensorID: " << sensorIdx << " Value: " << value << endl;
-            str_info[sensorIdx].val += value;
-            str_info[sensorIdx].count += 1;
+            if (streamName == "end" && value == "ok") {
+                end = true;
+
+            }
+            else if (field == "val") {
+                cout << "RICEVUTO VALORE DA SensorID: " << sensorIdx << " Value: " << value << endl;
+                str_info[sensorIdx].val += stof(value);
+                str_info[sensorIdx].count += 1;
+            } else if (field == "startTimestamp") {
+                startTimestamp = value;
+            } else if (field == "endTimestamp") {
+                endTimestamp = value;
+            }
+
           }
 
           lastIDs[streamName] = entryID; // Update the last ID
@@ -96,18 +141,9 @@ void Average::listenStreams() {
     }
 
     freeReplyObject(reply);
-
-    auto now = steady_clock::now();
-    duration<double> elapsed = now - start;
-
-    if (elapsed.count() >= windowSize) {
-        cout << "Numero di secondi: " << elapsed.count() << endl;
-        string endTimestamp = getCurrentTimestamp();
-        cout << "START TIMESTAMP: " << startTimestamp << " END TIMESTAMP: " << endTimestamp << endl;
+    if (end) {
         calculate_averages(startTimestamp, endTimestamp);
-
-        start = steady_clock::now();
-        startTimestamp = getCurrentTimestamp(); // Reset the timer for the next window
+        end = false;
     }
   }
 }
@@ -124,8 +160,6 @@ void Average::calculate_averages(string startTimestamp, string endTimestamp) {
       str_info[i].count = 0;
       string streamName = "a#" + to_string(i);
 
-      replace(startTimestamp.begin(), startTimestamp.end(), ' ', '_');
-      replace(endTimestamp.begin(), endTimestamp.end(), ' ', '_');
       string comm = "XADD " + streamName + " * val " + to_string(avg) + " startTimestamp " + startTimestamp + " endTimestamp " + endTimestamp;
       redisReply* reply = (redisReply *)redisCommand(this->c, comm.c_str());
       cout << avg << " mandato su stream " << streamName << endl;

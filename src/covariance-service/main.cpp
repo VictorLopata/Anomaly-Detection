@@ -29,7 +29,7 @@ int main() {
     vector<string> streams;
     map<string, string> lastIDs;
 
-    // Inserimento nomi stream medie e delle covarianze
+    // Inserimento nomi stream delle medie e delle covarianze
     for (int i = 0; i < conf.num_streams; i++) {
         streams.push_back("stream#" + to_string(i));
     }
@@ -44,6 +44,7 @@ int main() {
         string startTimestamp = getCurrentTimestamp();
         string command = "XREAD BLOCK 0 STREAMS";
 
+        // Costruzione del commando da inviare a Redis
         for (const auto &stream : streams) {
             command += " " + stream;
         }
@@ -51,12 +52,10 @@ int main() {
             command += " " + lastIDs[stream];
         }
 
-        // std::cout << "Time window (seconds): " << w << " | Data stream n : " << n << std::endl;
 
+        this_thread::sleep_for(seconds(int(conf.W)));
 
-        std::this_thread::sleep_for(seconds(int(conf.W)));
-
-        std::unordered_map<int, std::vector<double> > streams_data;
+        unordered_map<int, vector<double> > streams_data;
         for (const auto &stream : streams) {
             //cout <<  stream << ": " + lastIDs[stream] << endl;
         }

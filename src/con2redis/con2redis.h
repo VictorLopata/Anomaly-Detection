@@ -6,13 +6,9 @@
 #include <stdlib.h>
 #include "../utils/configuration.h"
 
-// include hiredis
 extern "C" {
 #include <hiredis/hiredis.h>
 }
-
-// #include "global.h"
-// #include "../../con2db/pgsql.h"
 
 
 #define dbg_log(fmt, ... )			\
@@ -36,8 +32,6 @@ config getConf(redisContext *c);
 void assertReplyType(redisContext *c, redisReply *r, int type);
 
 void assertReply(redisContext *c, redisReply *r);
-
-//void dumpReply(redisReply *r, int indent);
 
 void initStreams(redisContext *c, const char *stream);
 

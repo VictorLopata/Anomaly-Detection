@@ -1,8 +1,5 @@
 #include "main.h"
 
-using namespace std;
-
-
 // Funzione per calcolare il coefficiente binomiale
 int binomialCoeff(int n, int k) {
     int ans = 1;
@@ -38,6 +35,7 @@ int main() {
     // Wait configurations from user-interaction-service
     conf = getConf(c);
 
+    // Initialization of streams, vectors and data to be used
     int numStreamCov = binomialCoeff(conf.num_streams, 2);
     int numTotStream = numStreamCov + conf.num_streams;
 

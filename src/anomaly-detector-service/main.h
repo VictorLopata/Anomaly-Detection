@@ -16,6 +16,8 @@
 #define POSTGRESQL_PSW "admin"
 #define POSTGRESQL_DBNAME "anomalyseeker"
 
+using namespace std;
+
 pair<int, int> findPair(int j, int n) {
     int a = 0;
     int somma = 0;
@@ -32,7 +34,7 @@ pair<int, int> findPair(int j, int n) {
     return make_pair(a,b);
 }
 
-std::pair<int, int> indexToPair(int idx, int N) {
+pair<int, int> indexToPair(int idx, int N) {
     int low = 0, high = N - 1;
     int i = -1;
     while (low <= high) {
@@ -53,6 +55,8 @@ std::pair<int, int> indexToPair(int idx, int N) {
 void sendAnomaly(redisContext *c, redisReply *reply, double anomalValue, bool isAvg, int j, int n) {
 
     string com;
+
+    // Check which anomaly type it is: Average, Covariance
     if (!isAvg) {
         pair<int, int> p = findPair(j, n);
         reply = RedisCommand(c, "XADD covAnomaly * first_sensor %s second_sensor %s anomalValue %s", (to_string(p.first)).c_str(), (to_string(p.second)).c_str(), (to_string(anomalValue)).c_str());

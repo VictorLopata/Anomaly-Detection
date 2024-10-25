@@ -42,7 +42,7 @@ Con2DB::Con2DB(const char *hostname,
 #endif
 
 
-}  /* Con2DB() */
+}
 
 
 
@@ -61,7 +61,7 @@ PGresult* Con2DB::ExecSQLcmd(char *sqlcmd)
 {
 
     if (conn == NULL)
-        // error
+        fprintf(stderr, "Con2DB: connection to database failed\n");
     {
         fprintf(stderr, "ExecSQLcmd(): no connection to DB: PQexec on: %s\n", sqlcmd);
         exit (1);
@@ -88,8 +88,6 @@ PGresult* Con2DB::ExecSQLcmd(char *sqlcmd)
         fprintf(stderr, "ExecSQLcmd(): PQresultErrorMessage: %s\n",
                 PQresultErrorMessage(res) ) ;
 
-        //PQclear(res);
-        // finish();
     }
 
 #if 0
@@ -105,7 +103,7 @@ PGresult* Con2DB::ExecSQLtuples(char *sqlcmd)
 {
 
     if (conn == NULL)
-        // error
+        fprintf(stderr, "Con2DB: connection to database failed\n");
     {
         fprintf(stderr, "ExecSQLtuples(): no connection to DB: sqlcmd = %s\n", sqlcmd);
         // exit (1);

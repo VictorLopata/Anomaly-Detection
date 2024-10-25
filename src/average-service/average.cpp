@@ -1,11 +1,12 @@
 #include "average.h"
 
 
+// This will return us the current time (for the average or covariance calculated)
 string getCurrentTimestamp() {
     auto now = system_clock::now();
     auto in_time_t = system_clock::to_time_t(now);
-    std::stringstream ss;
-    ss << std::put_time(std::localtime(&in_time_t), "%Y-%m-%d %H:%M:%S"); // Formattato come stringa leggibile
+    stringstream ss;
+    ss << put_time(localtime(&in_time_t), "%Y-%m-%d %H:%M:%S"); // Formattato come stringa leggibile
     return ss.str();
 }
 
@@ -17,6 +18,7 @@ Average::Average() {
     exit(1);
   }
 
+  // This gives us the input data about the streams and thw window
   cout << "Aspettando configurazione..." << endl;
   config configuration = getConf(c);
 
@@ -57,6 +59,7 @@ void Average::listenStreams() {
   while (true) {
     string command = "XREAD COUNT 1 BLOCK 0 STREAMS";
 
+    // Build the command for Redis
     for (const auto &stream : streams) {
       command += " " + stream;
     }

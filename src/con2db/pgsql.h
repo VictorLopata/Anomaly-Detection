@@ -5,10 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-//extern "C"
-//{
 #include <libpq-fe.h>
-//}
 
 
 class Con2DB {

@@ -17,16 +17,16 @@ using namespace chrono;
 #define REDIS_SERVER "localhost"
 #define REDIS_PORT 6379
 
-std::string get_last_message_id(redisContext* context, const std::string& stream_name) {
+string get_last_message_id(redisContext* context, const string& stream_name) {
     // Eseguiamo il comando XINFO STREAM <stream_name>
     redisReply* reply = (redisReply*) redisCommand(context, "XINFO STREAM %s", stream_name.c_str());
 
 
 
     // Troviamo l'ID dell'ultimo messaggio ("last-entry")
-    std::string last_message_id = "";
+    string last_message_id = "";
     for (size_t i = 0; i < reply->elements; i += 2) {
-        std::string key(reply->element[i]->str);
+        string key(reply->element[i]->str);
         if (key == "last-entry") {
             if (reply->element[i + 1]->type == REDIS_REPLY_ARRAY && reply->element[i + 1]->elements > 0) {
                 last_message_id = reply->element[i + 1]->element[0]->str;
@@ -45,7 +45,7 @@ std::string get_last_message_id(redisContext* context, const std::string& stream
 }
 
 // Controlla se due stram di dati hanno la stessa dimensione
-bool same_size(const std::vector<double>& x, const std::vector<double>& y) {
+bool same_size(const vector<double>& x, const vector<double>& y) {
     return x.size() == y.size();
 }
 // Funzione che calcola la covarianza
@@ -72,22 +72,22 @@ int getIndex(int N, int i, int j) {
     return index;
 }
 
-void calculate_cov(redisContext *c, unordered_map<int, std::vector<double> >& streams_data, string startTimestamp, string endTimestamp, int n) {
+void calculate_cov(redisContext *c, unordered_map<int, vector<double> >& streams_data, string startTimestamp, string endTimestamp, int n) {
 
     // Attraversa lo stream di dati ed esegue il calcolo di covarianza
     for (auto it1 = streams_data.begin(); it1 != streams_data.end(); ++it1) {
-        for (auto it2 = std::next(it1); it2 != streams_data.end(); ++it2) {
+        for (auto it2 = next(it1); it2 != streams_data.end(); ++it2) {
             cout << "entriii" << endl;
             // Calcola la covarianza solo per stream di dati della stessa dimensione
             if (same_size(it1->second, it2->second)) {
                 // calcola la covarianza
                 double cov = covariance(it1->second, it2->second);
-                std::cout << "Covariance between stream " << it1->first << " and stream " << it2->first << ": " << cov << std::endl;
+                cout << "Covariance between stream " << it1->first << " and stream " << it2->first << ": " << cov << endl;
 
                 int indice = getIndex(n, it1->first, it2->first);
                 cout << "INDICE: " << indice << endl;
                 // Invia i risultati al canale Redis
-                std::string channel = "c#" + to_string(indice);
+                string channel = "c#" + to_string(indice);
 
                 string comm = "XADD " + channel + " * val " + to_string(cov) + " startTimestamp " + startTimestamp + " endTimestamp " + endTimestamp;
                 cout << comm << endl;
@@ -95,7 +95,7 @@ void calculate_cov(redisContext *c, unordered_map<int, std::vector<double> >& st
 
                 freeReplyObject(reply);
             } else {
-                std::cout << "Stream " << it1->first << " and Stream " << it2->first << " do not have the same size, skipping covariance calculation." << std::endl;
+                cout << "Stream " << it1->first << " and Stream " << it2->first << " do not have the same size, skipping covariance calculation." << endl;
             }
         }
     }
@@ -104,25 +104,25 @@ void calculate_cov(redisContext *c, unordered_map<int, std::vector<double> >& st
 string getCurrentTimestamp() {
     auto now = system_clock::now();
     auto in_time_t = system_clock::to_time_t(now);
-    std::stringstream ss;
-    ss << std::put_time(std::localtime(&in_time_t), "%Y-%m-%d %H:%M:%S"); // Formattato come stringa leggibile
+    stringstream ss;
+    ss << put_time(localtime(&in_time_t), "%Y-%m-%d %H:%M:%S"); // Formattato come stringa leggibile
     return ss.str();
 }
 
 
 
-// Ottiengo l'unità di tempo w da Redis
+// Ottengo l'unità di tempo w da Redis
 int get_time_window(redisContext* c) {
     redisReply* reply = (redisReply*)redisCommand(c, "GET time_window");
-    int w = (reply && reply->type == REDIS_REPLY_STRING) ? std::stoi(reply->str) : 5; // Predefinito 5 secondi
+    int w = (reply && reply->type == REDIS_REPLY_STRING) ? stoi(reply->str) : 5; // Predefinito 5 secondi
     freeReplyObject(reply);
     return w;
 }
 
-// Ottiengo il numero di stream di dati n da Redis
+// Ottengo il numero di stream di dati n da Redis
 int get_dataset_size(redisContext* c) {
     redisReply* reply = (redisReply*)redisCommand(c, "GET dataset_size");
-    int n = (reply && reply->type == REDIS_REPLY_STRING) ? std::stoi(reply->str) : 2; // Predefinito 2 stream
+    int n = (reply && reply->type == REDIS_REPLY_STRING) ? stoi(reply->str) : 2; // Predefinito 2 stream
     freeReplyObject(reply);
     return n;
 }

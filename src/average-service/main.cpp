@@ -8,11 +8,10 @@
 
 int main() {
 
-	//Initial config with window, threshold and number of streams
-
 	// Create object Average
 	Average avg = Average();
 
+    // Listen to stream from the average class
 	avg.listenStreams();
 
 	return 0;

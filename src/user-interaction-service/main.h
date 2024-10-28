@@ -3,9 +3,8 @@
 #include "../utils/configuration.h"
 #include "../con2redis/con2redis.h"
 #include <string>
+#include <utils/utils.h>
 
-#define REDIS_SERVER "localhost"
-#define REDIS_PORT 6379
 
 const std::string PURP_GRASS = "\033[1;35m";
 const std::string YELL_GRASS = "\033[1;33m";

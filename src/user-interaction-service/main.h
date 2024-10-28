@@ -12,7 +12,7 @@ const std::string YELL_GRASS = "\033[1;33m";
 const std::string BLUE_GRASS = "\033[1;34m";
 
 const double DEFAULT_W = 25.0;
-const double DEFAULT_THRESHOLD = 0.25;
+const double DEFAULT_SENS = 3;
 
 
 void printCovAnomaly(redisReply* reply) {

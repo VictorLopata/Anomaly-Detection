@@ -51,7 +51,7 @@ with open(FILE_CSV, mode='r') as csvfile:
         else:
             # Aspetta 1 secondo
             # TODO: Casuali
-            time.sleep(1)
+            time.sleep(0.2)
 
             send(s_data)
 

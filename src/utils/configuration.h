@@ -7,7 +7,7 @@ using namespace std;
 
 struct config {
     int num_streams = 0;
-    double threshold = 0;
+    double sens = 0;
     double W = 0;
 
 };

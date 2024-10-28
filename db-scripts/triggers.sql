@@ -53,8 +53,31 @@ END;
 $$ LANGUAGE plpgsql;
 
 
--- TRIGGERS
+CREATE OR REPLACE FUNCTION check_WindowTime()
+    RETURNS TRIGGER AS $$
+DECLARE
+    timeWindow INTERVAL := '10 seconds';
+BEGIN
+    IF NEW.end_timestamp - NEW.start_timestamp != timeWindow THEN
+        RAISE EXCEPTION 'Window Time not correct.';
+    END IF;
 
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+
+
+-- TRIGGERS
+CREATE TRIGGER check_windowAVG
+    BEFORE INSERT OR UPDATE ON Average
+    FOR EACH ROW
+    EXECUTE FUNCTION check_WindowTime();
+
+CREATE TRIGGER check_windowCOV
+    BEFORE INSERT OR UPDATE ON Covariance
+    FOR EACH ROW
+    EXECUTE FUNCTION check_WindowTime();
 
 
 CREATE TRIGGER check_time_overlap

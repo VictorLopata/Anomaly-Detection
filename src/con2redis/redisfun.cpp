@@ -42,8 +42,8 @@ config getConf(redisContext *c) {
                         if (field_name == "num_streams") {
                             conf.num_streams = stoi(field_value);
                             // cout << "Numero di stream da ascoltare: " << conf.num_streams << endl;
-                        } else if (field_name == "threshold") {
-                            conf.threshold = stod(field_value);
+                        } else if (field_name == "sens") {
+                            conf.sens = stod(field_value);
                             // cout << "Threshold: " << conf.threshold << endl;
                         } else if (field_name == "W") {
                             conf.W = stod(field_value);

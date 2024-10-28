@@ -57,16 +57,16 @@ int main() {
     }
     cout << endl;
 
-    printColored(BLUE_GRASS, "Inserisci il valore di threshold (0 se vuoi utilizzare valore di default 0.25): ", false);
-    cin >> cfg.threshold;
-    if (cfg.threshold == 0) {
-        cfg.threshold = DEFAULT_THRESHOLD;
+    printColored(BLUE_GRASS, "Inserisci il valore di sensibilità (0 se vuoi utilizzare valore di default 3): ", false);
+    cin >> cfg.sens;
+    if (cfg.sens == 0) {
+        cfg.sens = DEFAULT_SENS;
     }
 
 
     // Avvia la trasmissione della configuarazione
     c = redisConnect(REDIS_SERVER, REDIS_PORT);
-    reply = RedisCommand(c, "XADD conf * num_streams %s W %s threshold %s", (to_string(cfg.num_streams)).c_str(), (to_string(cfg.W)).c_str(), (to_string(cfg.threshold)).c_str());
+    reply = RedisCommand(c, "XADD conf * num_streams %s W %s sens %s", (to_string(cfg.num_streams)).c_str(), (to_string(cfg.W)).c_str(), (to_string(cfg.sens)).c_str());
 
     assertReply(c, reply);
 
